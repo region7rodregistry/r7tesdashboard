@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
     <script src="https://smtpjs.com/v3/smtp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="header-container">
@@ -22,7 +23,7 @@
         <button onclick="window.location.href='convert.html'" class="action-button">Convert Excel</button>
         <button onclick="window.location.href='recently-expired.html'" class="action-button">Recently Expired</button> 
         <button onclick="window.location.href='dfr.html'"class="action-button">Due For Renewal</button>
-        <button onclick="sendEmail()" class="action-button">Notify</button>
+        <button onclick="screenShot()" class="action-button">Screenshot</button>
     </div>
 </div>
 
@@ -57,7 +58,6 @@
                 <th>Date Issuance</th>
                 <th>Validity</th>
                 <th>E-mail</th>
-                <th><button onclick="copyEmails()" class="copy-button">Copy Emails</button></th>
                 <th>Phone</th>
             </tr>
         </thead>
@@ -209,16 +209,18 @@
     }
     const nodemailer = require("nodemailer");
 
-    function copyEmails() {
-        const emailCells = document.querySelectorAll('#data-table-body tr td:nth-child(11)'); // Assuming E-mail is the 11th column
-        const emails = Array.from(emailCells).map(cell => cell.textContent).join(', ');
-        
-        navigator.clipboard.writeText(emails).then(() => {
-            alert('Emails copied to clipboard: ' + emails);
-        }).catch(err => {
-            console.error('Error copying emails: ', err);
-        });
+    async function screenShot() {
+        try {
+            const canvas = await html2canvas(document.body);
+            const link = document.createElement('a');
+            link.download = 'nttcmis_report.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (error) {
+            console.error('Error capturing screenshot:', error);
+        }
     }
+
 </script>
 
 <style>
