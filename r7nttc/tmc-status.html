@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NTTCMIS</title>
+    <title>TMC Status - NTTCMIS</title>
     <link rel="icon" type="image/png" href="./icons/nttcmis.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -38,8 +38,8 @@
                 <img src="./icons/tlogo.png" alt="Left Logo" class="w-20 h-auto md:w-24 hover:scale-105 transition-transform duration-300">
                 <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-blue-200 to-transparent"></div>
             </div>
-            <h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-center bg-gradient-to-r from-blue-500 to-blue-900 bg-clip-text text-transparent">
-                NATIONAL TVET TRAINER'S CERTIFICATE RECORDS
+            <h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-center bg-gradient-to-r from-purple-500 to-purple-900 bg-clip-text text-transparent">
+                TMC STATUS RECORDS
             </h1>
             <div class="flex items-center gap-4">
                 <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-blue-200 to-transparent"></div>
@@ -47,7 +47,7 @@
             </div>
         </div>
         <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-3 mt-8">
-            <button onclick="window.location.href='../index.html'" class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg transition-all duration-300 min-w-[140px] shadow-md hover:bg-blue-700 flex items-center justify-center gap-2">
+            <button onclick="window.location.href='index.html'" class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg transition-all duration-300 min-w-[140px] shadow-md hover:bg-blue-700 flex items-center justify-center gap-2">
                 <i class="fas fa-home"></i>
                 <span>Home</span>
             </button>
@@ -67,13 +67,9 @@
                 <i class="fas fa-chart-bar"></i>
                 <span>Statistics</span>
             </button>
-            <button onclick="window.location.href='tmc-status.html'" class="px-6 py-2.5 bg-white text-purple-600 font-semibold rounded-lg border-2 border-purple-400 hover:bg-purple-50 transition-all duration-300 min-w-[140px] shadow-md flex items-center justify-center gap-2">
+            <button onclick="window.location.href='tmc-status.html'" class="px-6 py-2.5 bg-purple-600 text-white font-semibold rounded-lg transition-all duration-300 min-w-[140px] shadow-md hover:bg-purple-700 flex items-center justify-center gap-2">
                 <i class="fas fa-certificate"></i>
                 <span>TMC Status</span>
-            </button>
-            <button onclick="exportData()" class="px-6 py-2.5 bg-black text-white font-semibold rounded-lg transition-all duration-300 min-w-[140px] shadow-md hover:bg-blue-900 flex items-center justify-center gap-2">
-                <i class="fas fa-download"></i>
-                <span>Export Data</span>
             </button>
         </div>
     </div>
@@ -81,7 +77,7 @@
 <div class="container mx-auto px-4 py-8">
     <div id="entryCount" class="text-center text-lg font-semibold text-blue-900 mb-2"></div>
     <div class="text-center text-lg text-blue-700 mb-4">
-        Current NTTC Holders As of: <span id="currentDate"></span>
+        TMC Status Records As of: <span id="currentDate"></span>
     </div>
     <div class="max-w-2xl mx-auto mb-8">
         <div class="relative flex items-center bg-white rounded-full shadow-md p-2">
@@ -105,10 +101,9 @@
                     <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Middle Name</th>
                     <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Extension</th>
                     <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Qualification</th>
-                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Certificate Number</th>
-                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Control Number</th>
-                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">Date Issuance</th>
-                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white rounded-tr-lg">Validity</th>
+                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">TMC - Certificate Number</th>
+                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white">TM Date Issuance</th>
+                    <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider border-b-4 border-blue-400 bg-white rounded-tr-lg">TM Validity</th>
                 </tr>
             </thead>
             <tbody id="data-table-body" class="divide-y divide-blue-100">
@@ -142,6 +137,7 @@
     let filteredData = [];
     let originalData = [];
     let debounceTimeout;
+
     async function loadData() {
         try {
             const response = await fetch('data.json');
@@ -150,108 +146,130 @@
             }
             const data = await response.json();
             originalData = data;
-            filteredData = originalData;
+            
+            // Filter data to only show records with TMC information (column U exists and is not null)
+            filteredData = originalData.filter(row => row.U && row.U !== null && row.U !== '');
+            
+            // Sort by TMC TM expiration date (column U) - ascending order (earliest first)
+            filteredData.sort((a, b) => {
+                const dateA = new Date(a.U);
+                const dateB = new Date(b.U);
+                return dateA - dateB;
+            });
+            
             renderTable();
         } catch (error) {
             console.error("Error loading data:", error);
         }
     }
+
     function renderTable() {
         const startIndex = (currentPage - 1) * entriesPerPage;
         const paginatedData = filteredData.slice(startIndex, startIndex + entriesPerPage);
         const tableBody = document.getElementById("data-table-body");
         const mobileView = document.getElementById("mobile-card-view");
+        
         tableBody.style.opacity = 0;
         mobileView.style.opacity = 0;
+        
         setTimeout(() => {
             // Desktop Table View
             tableBody.innerHTML = paginatedData.map(row => {
-                const validityDate = new Date(row.AD);
+                const tmValidityDate = new Date(row.U);
                 const today = new Date();
                 const threeMonthsFromNow = new Date();
                 threeMonthsFromNow.setMonth(today.getMonth() + 3);
+                
+                // Color coding: Red if expired, Orange if expiring within 3 months
                 let validityColor = 'text-green-600';
-                if (validityDate < today) {
+                if (tmValidityDate < today) {
                     validityColor = 'text-red-600';
-                } else if (validityDate <= threeMonthsFromNow) {
-                    validityColor = 'text-blue-600';
+                } else if (tmValidityDate <= threeMonthsFromNow) {
+                    validityColor = 'text-orange-600';
                 }
+                
                 return `
-                    <tr class="hover:bg-blue-50 transition-colors cursor-pointer">
+                    <tr class="hover:bg-blue-50 transition-colors">
                         <td class="px-4 py-4 break-words text-black">${row.B || ''}</td>
-                        <td class="px-4 py-4 break-words"><a href="view_record.html?id=${encodeURIComponent(row.id)}" class="text-blue-700 hover:text-blue-900 hover:underline">${row.C || ''}</a></td>
-                        <td class="px-4 py-4 break-words"><a href="view_record.html?id=${encodeURIComponent(row.id)}" class="text-blue-700 hover:text-blue-900 hover:underline">${row.D || ''}</a></td>
-                        <td class="px-4 py-4 break-words"><a href="view_record.html?id=${encodeURIComponent(row.id)}" class="text-blue-700 hover:text-blue-900 hover:underline">${row.E || ''}</a></td>
-                        <td class="px-4 py-4 break-words"><a href="view_record.html?id=${encodeURIComponent(row.id)}" class="text-blue-700 hover:text-blue-900 hover:underline">${row.F || ''}</a></td>
+                        <td class="px-4 py-4 break-words text-black">${row.C || ''}</td>
+                        <td class="px-4 py-4 break-words text-black">${row.D || ''}</td>
+                        <td class="px-4 py-4 break-words text-black">${row.E || ''}</td>
+                        <td class="px-4 py-4 break-words text-black">${row.F || ''}</td>
                         <td class="px-4 py-4 break-words text-black">${row.R || ''}</td>
-                        <td class="px-4 py-4 break-words text-black">${row.AB || ''}</td>
-                        <td class="px-4 py-4 break-words text-black">${row.AE || ''}</td>
-                        <td class="px-4 py-4 break-words text-black">${formatDate(row.AC)}</td>
-                        <td class="px-4 py-4 break-words ${validityColor}">${formatDate(row.AD)}</td>
+                        <td class="px-4 py-4 break-words text-black">${row.V || ''}</td>
+                        <td class="px-4 py-4 break-words text-black">${formatDate(row.W)}</td>
+                        <td class="px-4 py-4 break-words font-semibold ${validityColor}">${formatDate(row.U)}</td>
                     </tr>
                 `;
             }).join("");
+            
             // Mobile Card View
             mobileView.innerHTML = paginatedData.map(row => {
-                const validityDate = new Date(row.AD);
+                const tmValidityDate = new Date(row.U);
                 const today = new Date();
                 const threeMonthsFromNow = new Date();
                 threeMonthsFromNow.setMonth(today.getMonth() + 3);
+                
+                // Color coding: Red if expired, Orange if expiring within 3 months
                 let validityColor = 'text-green-600';
-                if (validityDate < today) {
+                if (tmValidityDate < today) {
                     validityColor = 'text-red-600';
-                } else if (validityDate <= threeMonthsFromNow) {
-                    validityColor = 'text-blue-600';
+                } else if (tmValidityDate <= threeMonthsFromNow) {
+                    validityColor = 'text-orange-600';
                 }
+                
                 return `
                     <div class="bg-white rounded-lg shadow-md p-4 border border-blue-100 hover:bg-blue-50 transition-colors">
-                        <a href="view_record.html?id=${encodeURIComponent(row.id)}" class="block">
-                            <div class="space-y-2">
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Name</span>
-                                    <span class="text-black font-medium">${row.C || ''}, ${row.D || ''} ${row.E || ''} ${row.F || ''}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Qualification</span>
-                                    <span class="text-black">${row.R || ''}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Certificate Number</span>
-                                    <span class="text-black">${row.AB || ''}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Control Number</span>
-                                    <span class="text-black">${row.AE || ''}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Date Issuance</span>
-                                    <span class="text-black">${formatDate(row.AC)}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-blue-700 uppercase">Validity</span>
-                                    <span class="${validityColor}">${formatDate(row.AD)}</span>
-                                </div>
+                        <div class="space-y-2">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">Name</span>
+                                <span class="text-black font-medium">${row.C || ''}, ${row.D || ''} ${row.E || ''} ${row.F || ''}</span>
                             </div>
-                        </a>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">Province</span>
+                                <span class="text-black">${row.B || ''}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">Qualification</span>
+                                <span class="text-black">${row.R || ''}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">TMC - Certificate Number</span>
+                                <span class="text-black">${row.V || ''}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">TM Date Issuance</span>
+                                <span class="text-black">${formatDate(row.W)}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-blue-700 uppercase">TM Validity</span>
+                                <span class="${validityColor} font-semibold">${formatDate(row.U)}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join("");
+            
             tableBody.style.opacity = 1;
             mobileView.style.opacity = 1;
         }, 100);
+        
         renderPagination();
         document.getElementById("entryCount").textContent = `Total Entries: ${filteredData.length}`;
     }
+
     function renderPagination() {
         const totalPages = Math.ceil(filteredData.length / entriesPerPage);
         const pagination = document.getElementById("pagination");
         let paginationHTML = '';
+        
         // Previous button
         paginationHTML += `
             <button onclick="setPage(${currentPage - 1})" 
                 class="px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-100 text-blue-400 cursor-not-allowed' : 'bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700'} transition-all duration-300">
                 Previous
             </button>`;
+        
         // Function to determine which page numbers to show
         const getVisiblePages = () => {
             const pages = [];
@@ -276,6 +294,7 @@
             }
             return pages;
         };
+        
         // Generate page buttons
         const visiblePages = getVisiblePages();
         visiblePages.forEach(page => {
@@ -290,30 +309,49 @@
                     </button>`;
             }
         });
+        
         // Next button
         paginationHTML += `
             <button onclick="setPage(${currentPage + 1})" 
                 class="px-4 py-2 rounded-lg ${currentPage === totalPages ? 'bg-blue-100 text-blue-400 cursor-not-allowed' : 'bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700'} transition-all duration-300">
                 Next
             </button>`;
+        
         pagination.innerHTML = paginationHTML;
     }
+
     // Add window resize handler to update pagination
     window.addEventListener('resize', () => {
         renderPagination();
     });
+
     function setPage(page) {
+        if (page < 1 || page > Math.ceil(filteredData.length / entriesPerPage)) {
+            return;
+        }
         currentPage = page;
         renderTable();
     }
+
     function searchTable() {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
             const searchTerm = document.getElementById("searchInput").value.toLowerCase().trim();
+            
             if (searchTerm === '') {
-                filteredData = originalData;
+                // Reset to original filtered data (only records with TMC info)
+                filteredData = originalData.filter(row => row.U && row.U !== null && row.U !== '');
+                filteredData.sort((a, b) => {
+                    const dateA = new Date(a.U);
+                    const dateB = new Date(b.U);
+                    return dateA - dateB;
+                });
             } else {
+                // Filter by search term
                 filteredData = originalData.filter(row => {
+                    if (!row.U || row.U === null || row.U === '') {
+                        return false;
+                    }
                     return (
                         (row.B && row.B.toString().toLowerCase().includes(searchTerm)) ||
                         (row.C && row.C.toString().toLowerCase().includes(searchTerm)) ||
@@ -321,68 +359,51 @@
                         (row.E && row.E.toString().toLowerCase().includes(searchTerm)) ||
                         (row.F && row.F.toString().toLowerCase().includes(searchTerm)) ||
                         (row.R && row.R.toString().toLowerCase().includes(searchTerm)) ||
-                        (row.AB && row.AB.toString().toLowerCase().includes(searchTerm)) ||
-                        (row.AE && row.AE.toString().toLowerCase().includes(searchTerm)) ||
-                        (row.AC && formatDate(row.AC).toLowerCase().includes(searchTerm)) ||
-                        (row.AD && formatDate(row.AD).toLowerCase().includes(searchTerm))
+                        (row.V && row.V.toString().toLowerCase().includes(searchTerm)) ||
+                        (row.W && formatDate(row.W).toLowerCase().includes(searchTerm)) ||
+                        (row.U && formatDate(row.U).toLowerCase().includes(searchTerm))
                     );
                 });
+                
+                // Re-sort after filtering
+                filteredData.sort((a, b) => {
+                    const dateA = new Date(a.U);
+                    const dateB = new Date(b.U);
+                    return dateA - dateB;
+                });
             }
+            
             currentPage = 1;
             renderTable();
         }, 300);
     }
+
     loadData();
+
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
+
     function formatDate(dateString) {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('en-US', options);
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return dateString; // Return original string if date is invalid
+            }
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        } catch (e) {
+            return dateString; // Return original string if parsing fails
+        }
     }
+
     window.onload = () => {
         document.body.classList.add('opacity-100');
     };
-    function exportData() {
-        fetch('data.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!Array.isArray(data)) {
-                    throw new Error("Invalid data format: Expected an array.");
-                }
-                const headers = [
-                    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
-                    "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA", "AB", "AC", "AD",
-                    "AE", "AF", "AG", "AH", "AI"
-                ];
-                const rows = data.map(entry => [
-                    entry.A, entry.B, entry.C, entry.D, entry.E, entry.F, entry.G, entry.H, entry.I,
-                    entry.J, entry.K, entry.L, entry.M, entry.N, entry.O, entry.P, entry.Q, entry.R,
-                    entry.S, entry.T, entry.U, entry.V, entry.W, entry.X, entry.Y, entry.Z, entry.AA,
-                    entry.AB, entry.AC, entry.AD, entry.AE, entry.AF, entry.AG, entry.AH, entry.AI
-                ]);
-                const csvContent = [
-                    headers.join(","),
-                    ...rows.map(row => row.join(","))
-                ].join("\n");
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.setAttribute("href", url);
-                link.setAttribute("download", "exported_data.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            })
-            .catch(error => console.error("Error exporting data:", error));
-    }
 </script>
 </body>
 </html>
+
