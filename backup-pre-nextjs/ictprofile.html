@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT UNIT Portfolio</title>
+    <style>
+        :root {
+            --primary-color: #00ff00;
+            --secondary-color: #0066cc;
+            --background-color: #000000;
+            --text-color: #ffffff;
+            --accent-color: #ff00ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--primary-color);
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px var(--primary-color); }
+            50% { text-shadow: 0 0 20px var(--primary-color), 0 0 30px var(--primary-color); }
+            100% { text-shadow: 0 0 5px var(--primary-color); }
+        }
+
+        .btn {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .team-member {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--primary-color);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .team-member:hover {
+            transform: translateY(-10px);
+            animation: cardGlow 2s infinite;
+        }
+
+        @keyframes cardGlow {
+            0% { box-shadow: 0 0 5px var(--accent-color); }
+            50% { box-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+            100% { box-shadow: 0 0 5px var(--accent-color); }
+        }
+
+        .team-member img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .team-member-content {
+            padding: 1rem;
+        }
+
+        .team-member h2 {
+            color: var(--primary-color);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .team-member p {
+            color: var(--text-color);
+            margin: 0 0 1rem 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: var(--background-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 90%;
+            max-height: 90%;
+            margin: 2rem auto;
+            position: relative;
+            animation: glitch 0.8s ease forwards;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .modal h3 {
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @keyframes glitch {
+            0% { opacity: 0; transform: translate(0); }
+            10% { opacity: 1; transform: translate(-5px, 0); }
+            20% { opacity: 1; transform: translate(5px, 0); }
+            30% { opacity: 0.8; transform: translate(-10px, 0); }
+            40% { opacity: 1; transform: translate(10px, 0); }
+            50% { opacity: 0.9; transform: translate(-5px, 0); }
+            60% { opacity: 1; transform: translate(0); }
+            70% { opacity: 0.7; transform: translate(5px, 0); }
+            80% { opacity: 0.5; transform: translate(-5px, 0); }
+            90% { opacity: 1; transform: translate(0); }
+            100% { opacity: 1; transform: translate(0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div class="container">
+        <header>
+            <h1>ICT UNIT</h1>
+            <div>
+                <a href="index.html" class="btn">Home</a>
+                <button class="btn" onclick="openModal('infoModal')">Info</button>
+            </div>
+        </header>
+        <div class="team-grid">
+            <div class="team-member">
+                <img src="./icons/gerard.jpg" alt="Gerard Randolf G. Tecson">
+                <div class="team-member-content">
+                    <h2>Gerard Randolf G. Tecson</h2>
+                    <p>Information Technology Officer I</p>
+                    <a href="https://www.facebook.com/teckiii" target="_blank" rel="noopener noreferrer" class="btn">Facebook</a>
+                </div>
+            </div>
+            <div class="team-member">
+                <img src="./icons/aljohn.jpg" alt="Aljohn Rosales">
+                <div class="team-member-content">
+                    <h2>Aljohn Rosales</h2>
+                    <p>Support Staff, ICT Unit</p>
+                    <a href="https://www.facebook.com/AljohnBoy" target="_blank" rel="noopener noreferrer" class="btn">Facebook</a>
+                </div>
+            </div>
+            <div class="team-member" onclick="openModal('kaneModal')">
+                <img src="./icons/kane.jpg" alt="Jan Kane T. Reroma">
+                <div class="team-member-content">
+                    <h2>Jan Kane T. Reroma</h2>
+                    <p>Support Staff, ICT Unit</p>
+                    <a href="https://www.facebook.com/profile.php?id=100089537864490" target="_blank" rel="noopener noreferrer" class="btn">Facebook</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('infoModal')">&times;</button>
+            <h2>ICT Unit Information</h2>
+            <div>
+                <h3>Operational Efficiency</h3>
+                <p>The ICT Unit enhances operational efficiency by implementing and maintaining robust information systems that streamline processes, reduce manual workloads, and ensure accurate data management.</p>
+            </div>
+            <div>
+                <h3>Data Management and Security</h3>
+                <p>The ICT Unit ensures that all data related to trainees, trainers, and training programs are securely stored and efficiently retrieved, safeguarding sensitive information against unauthorized access and cyber threats.</p>
+            </div>
+            <div>
+                <h3>Support and Maintenance</h3>
+                <p>The ICT Unit provides essential technical support and maintenance for all IT-related infrastructure within the Regional Operations Division.</p>
+            </div>
+            <div>
+                <h3>Innovation and Development</h3>
+                <p>By leveraging cutting-edge technologies, the ICT Unit spearheads innovative projects that enhance TESDA's service delivery.</p>
+            </div>
+            <div>
+                <h3>Training and Capacity Building</h3>
+                <p>The ICT Unit plays a role in capacity building by training TESDA staff in the use of new technologies and systems.</p>
+            </div>
+            <div>
+                <h3>Team Members</h3>
+                <p>The ICT Unit is led by <strong>Gerard Randolf G. Tecson</strong>, with support staff <strong>Aljohn T. Rosales</strong> and <strong>Jan Kane T. Reroma</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="kaneModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('kaneModal')">&times;</button>
+            <h2>Jan Kane T. Reroma - Profile</h2>
+            <img src="./icons/kane.jpg" alt="Jan Kane T. Reroma" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem;">
+            <div>
+                <h3>Professional Role</h3>
+                <p>Support Staff, ICT Unit at TESDA Regional Operations Division</p>
+            </div>
+            <div>
+                <h3>Responsibilities</h3>
+                <ul>
+                    <li>Provides technical support for ICT infrastructure</li>
+                    <li>Assists in maintaining and troubleshooting computer systems</li>
+                    <li>Supports digital transformation initiatives</li>
+                    <li>Contributes to the efficient operation of the ICT Unit</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Short Background</h3>
+                <p>Kane Reroma joined TESDA Region VII on October 5, 2023. He has been instrumental in improving the NTTC Process, leveraging his programming skills to develop web-based systems that streamline workflows and enhance efficiency.</p>
+            </div>
+            <div>
+                <h3>Contact</h3>
+                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/profile.php?id=100089537864490" target="_blank" rel="noopener noreferrer">Jan Kane T. Reroma</a></p>
+                <p><strong>Cellphone Number:</strong> 0920-519-6661</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'block';
+            modal.querySelector('.modal-content').classList.add('glitch');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.querySelector('.modal-content').classList.remove('glitch');
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Matrix background
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const columns = canvas.width / 20;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0F0';
+            ctx.font = '15px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = String.fromCharCode(Math.random() * 128);
+                ctx.fillText(text, i * 20, drops[i] * 20);
+
+                if (drops[i] * 20 > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 33);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

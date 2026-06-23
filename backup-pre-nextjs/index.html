@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESDA Region VII MIS</title>
+    <link rel="icon" href="icons/t7logo.png" type="image/png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #00296b;
+            --secondary-color: #09101b;
+            --text-color: #ffffff;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url('icons/office.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+        }
+
+        header {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem 0;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-title img {
+            width: 85px;
+            height: 85px;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .logo-title h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 1rem 0 0;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all var(--transition-speed) ease;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 2rem 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            order: 1;
+        }
+
+        .box {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 10rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .box:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .sub-boxes {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .sub-boxes.active {
+            max-height: 500px;
+        }
+
+        .sub-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            margin-top: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .sub-box:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        footer {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: -2rem;
+        }
+
+        .image-holder {
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            height: 50%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            order: 2;
+        }
+
+        .featured-image {
+            max-width: 50%;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .featured-image:hover {
+            transform: scale(1.02);
+        }
+
+        .website-link {
+            text-align: center;
+            margin-top: 0rem;
+            order: 3;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+            }
+
+            .logo-title {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .logo-title img {
+                width: 50px;
+                height: 50px;
+            }
+
+            .logo-title h1 {
+                font-size: 1.2rem;
+            }
+
+            nav ul {
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .box {
+                height: auto;
+                font-size: 1rem;
+                min-height: 6rem;
+            }
+
+            .sub-box {
+                height: auto;
+                font-size: 0.8rem;
+            }
+
+            .image-holder {
+                margin-top: 1.5rem;
+                order: 1;
+            }
+
+            .grid {
+                order: 2;
+            }
+
+            .featured-image {
+                max-width: 100% !important;
+                width: 100%;
+            }
+
+            .website-link {
+                order: 1;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding: 20px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+            cursor: move;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 100%;
+            max-height: 90vh;
+            transform-origin: center center;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .modal-content.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .close {
+            position: fixed;
+            right: 35px;
+            top: 15px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .zoom-controls button {
+            padding: 8px 16px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+        }
+
+        .zoom-controls button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-title">
+                    <img src="icons/tlogo.png" alt="Left Logo">
+                    <h1>TESDA Region VII MIS</h1>
+                    <img src="icons/blogo.png" alt="Right Logo">
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#" onclick="goToDashboard()" class="dashboard">Dashboard</a></li>
+                        <li><a href="./r7nttc2/">ONSTS</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="grid">
+                <div>
+                    <div class="box" data-box="UTPRAS">UTPRAS</div>
+                    <div class="sub-boxes" id="UTPRAS-sub">
+                        <a href="r7utpras/compendium.html" class="sub-box">Compendium of Programs</a>
+                        <a href="r7nttc/" class="sub-box">NTTC - Records</a>
+                    </div>
+                </div>
+                <div>
+                    <div class="box" data-box="PTCACS">PTCACS</div>
+                    <div class="sub-boxes" id="PTCACS-sub">
+                        <a href="r7ac/" class="sub-box">Assessment Center Accreditation</a>
+                        <a href="r7ac/assessors.html" class="sub-box">Competency Assessors</a>
+                    </div>
+                </div>
+                <div>
+                    <div class="box" data-box="SCHOLARSHIPS">Scholarship</div>
+                    <div class="sub-boxes" id="SCHOLARSHIPS-sub">
+                        <a href="https://script.google.com/macros/s/AKfycbzkf1NElWnt50HmX6as-P-kTehdoA1TZWO2XcmsD1CFKFINgEjAZJYPila4_9vO2YxX/exec" class="sub-box">Scholarship System</a>
+                        <a href="https://sites.google.com/tesda.gov.ph/spmorfy2019/regions" class="sub-box">SPMOR</a>
+                    </div>
+                </div>
+            </div> 
+            <div class="image-holder">       
+                <img src="icons/tesdabanner1.jpg" alt="NTTC MIS" class="featured-image">
+            </div>
+            <p class="website-link">
+                <a href="https://sites.google.com/a/tesda.gov.ph/tesda-regional-office-vii/home" 
+                   style="color: inherit; text-decoration: underline;">
+                    TESDA VII - Website
+                </a>
+            </p>
+            
+        </div>
+    </main>
+    
+
+    <footer>
+        <div class="container">
+            <p>&copy; <script>document.write(new Date().getFullYear())</script> Developed by TESDA Region VII</a>. All rights reserved. - ROD / <a href="ictprofile.html" style="color: inherit; text-decoration: underline;">ICT Unit</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const boxes = document.querySelectorAll('.box');
+
+            boxes.forEach(box => {
+                box.addEventListener('click', function() {
+                    const boxName = this.getAttribute('data-box');
+                    const subBoxes = document.getElementById(boxName + '-sub');
+                    if (subBoxes) {
+                        subBoxes.classList.toggle('active');
+                        boxes.forEach(otherBox => {
+                            if (otherBox !== box) {
+                                const otherSubBoxes = document.getElementById(otherBox.getAttribute('data-box') + '-sub');
+                                if (otherSubBoxes) {
+                                    otherSubBoxes.classList.remove('active');
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        function goToDashboard() {
+            // Set the flag to show loading screen only when clicking the dashboard link
+            sessionStorage.setItem('showDashboardLoading', 'true');
+            // Navigate to dashboard
+            window.location.href = 'execdash/index.html';
+        }
+
+    </script>
+
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImg">
+        <div class="zoom-controls">
+            <button id="zoomIn">+</button>
+            <button id="zoomOut">-</button>
+            <button id="resetZoom">Reset</button>
+        </div>
+    </div>
+</body>
+</html>

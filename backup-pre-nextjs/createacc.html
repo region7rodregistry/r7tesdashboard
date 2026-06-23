@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ethnocentric&display=swap" rel="stylesheet">
+  <style>
+ @keyframes rgb-animation {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 0, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 0, 255, 0.8), 0 0 30px rgba(255, 0, 0, 0.8), 0 0 30px rgba(0, 255, 0, 0.8);
+  }
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(to right, #1a1a1a, #007bff);
+  color: #fff;
+}
+
+.login-container {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2.5rem;
+  border-radius: 15px;
+  animation: rgb-animation 4s infinite alternate;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.login-container:hover {
+  transform: translateY(-5px);
+}
+
+.login-container h1 {
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: bold;
+}
+
+.login-container input {
+  width: 90%;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  margin: 0.25rem 0;
+}
+
+.login-container input:focus {
+  border-color: #007bff;
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+}
+
+.login-container button {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #fff;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease, background 0.3s ease, transform 0.3s ease;
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
+
+.login-container button:hover {
+  background: #0056b3;
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
+  transform: translateY(-3px);
+}
+
+.additional-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.small-button {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  flex: 0 0 48%;
+  margin-top: 1rem;
+}
+
+.small-button:hover {
+  background: #5a6268;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.message {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #dc3545;
+}
+
+.logo {
+  width: 95px;
+  height: auto;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: rotate(360deg) scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    width: 90%;
+    padding: 2rem;
+  }
+
+  .login-container h1 {
+    font-size: 1.75rem;
+  }
+}
+</style>
+
+</head>
+<body>
+  <div class="login-container">
+    <img src="icons/t7logo.png" alt="Logo" class="logo" />
+    <h1>Create Account</h1>
+    <form id="createAccountForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <button type="submit">Create Account</button>
+      <a href="login.html" class="small-button">Back to Login</a>
+      <a href="forgotpass.html" class="small-button">Forgot Password?</a>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script src="userdata.js"></script>
+  <script>
+    const form = document.getElementById('createAccountForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const email = document.getElementById('email').value;
+
+      if (password !== confirmPassword) {
+        message.style.color = 'red';
+        message.textContent = 'Passwords do not match';
+        return;
+      }
+
+      if (!userdata[username]) {
+        userdata[username] = { 
+          password, 
+          email, 
+          status: 'approved'
+        };
+
+        try {
+          const response = await fetch('http://localhost:3000/submitUserData', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, email })
+          });
+
+          if (response.ok) {
+            message.style.color = 'green';
+            message.textContent = 'Account created successfully!';
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 1500);
+          } else {
+            throw new Error('Failed to submit user data');
+          }
+        } catch (error) {
+          message.style.color = 'red';
+          message.textContent = 'Error submitting data: ' + error.message;
+        }
+      } else {
+        message.style.color = 'red';
+        message.textContent = 'Username already exists';
+      }
+    });
+  </script>
+</body>
+</html>

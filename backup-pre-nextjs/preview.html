@@ -1,0 +1,59 @@
+<script>
+    // Ticket number generation function
+    function generateTicketNumber() {
+        const timestamp = Date.now().toString().slice(-6);
+        const randomDigits = Math.floor(1000 + Math.random() * 9000);
+        return `TESDA-${timestamp}-${randomDigits}`;
+    }
+
+    // Assign ticket number on page load
+    window.onload = function() {
+        document.getElementById('ticketNumber').value = generateTicketNumber();
+    };
+
+    // Modified form submission handler
+    document.getElementById('submitToProvincial').addEventListener('click', async function() {
+        const ticketNum = document.getElementById('ticketNumber').value;
+        
+        const formData = {
+            ticketNumber: ticketNum,
+            lastName: document.getElementById('last_name').value,
+            firstName: document.getElementById('first_name').value,
+            email: document.getElementById('email').value,
+            contact: document.getElementById('contact').value,
+            qualification: document.getElementById('qualification').value,
+            status: 'pending',
+            submittedAt: new Date().toISOString()
+        };
+
+        // ... existing submission code ...
+
+        // Show success modal with ticket number
+        showSuccessModal(ticketNum);
+    });
+
+    // Modified success modal function
+    function showSuccessModal(ticketNum) {
+        const modalContent = document.getElementById('modalContent');
+        modalContent.innerHTML = `<h2>Success!</h2><p>Your Ticket Number: <strong>${ticketNum}</strong></p>`;
+        
+        const successModal = document.getElementById('successModal');
+        successModal.style.display = 'block';
+    }
+
+    // Modified PDF save function
+    function savePDF() {
+        const ticketNum = document.getElementById('ticketNumber').value;
+        const element = document.getElementById('tesdaForm');
+
+        html2pdf()
+            .set({ filename: `TESDA_Application_${ticketNum}.pdf` })
+            .from(element)
+            .save();
+    }
+</script>
+
+<form id="tesdaForm">
+    <input type="hidden" id="ticketNumber" name="ticketNumber">
+    // ... existing form fields ...
+</form> 

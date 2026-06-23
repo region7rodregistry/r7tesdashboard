@@ -1,0 +1,159 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-valid: var(--valid);
+  --color-expiring: var(--expiring);
+  --color-expired: var(--expired);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  /* Blue & white theme — soft blue-white ground, white cards, blue-tinted chrome. */
+  --background: oklch(0.984 0.008 245);
+  --foreground: oklch(0.21 0.04 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.04 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.04 258);
+  /* TESDA brand blue */
+  --primary: oklch(0.52 0.18 254);
+  --primary-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.52 0.18 254);
+  --brand-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.948 0.022 245);
+  --secondary-foreground: oklch(0.32 0.07 256);
+  --muted: oklch(0.955 0.018 245);
+  --muted-foreground: oklch(0.47 0.04 256);
+  --accent: oklch(0.93 0.035 248);
+  --accent-foreground: oklch(0.32 0.09 256);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.9 0.018 245);
+  --input: oklch(0.9 0.018 245);
+  --ring: oklch(0.52 0.18 254);
+  /* validity status — AA-contrast tuned */
+  --valid: oklch(0.52 0.13 155);
+  --expiring: oklch(0.55 0.12 70);
+  --expired: oklch(0.55 0.2 25);
+  --chart-1: oklch(0.52 0.18 254);
+  --chart-2: oklch(0.62 0.17 250);
+  --chart-3: oklch(0.45 0.12 256);
+  --chart-4: oklch(0.7 0.15 245);
+  --chart-5: oklch(0.35 0.1 258);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.62 0.17 252);
+  --primary-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.62 0.17 252);
+  --brand-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.3 0.02 254);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.62 0.17 252);
+  --valid: oklch(0.72 0.16 158);
+  --expiring: oklch(0.78 0.14 78);
+  --expired: oklch(0.7 0.19 22);
+  --chart-1: oklch(0.62 0.17 252);
+  --chart-2: oklch(0.7 0.15 245);
+  --chart-3: oklch(0.75 0.13 240);
+  --chart-4: oklch(0.55 0.14 258);
+  --chart-5: oklch(0.82 0.1 235);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Smooth light/dark crossfade — colour properties only, so layout/transforms/
+     framer-motion are untouched. Opts out under reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    *,
+    *::before,
+    *::after {
+      transition:
+        background-color 250ms ease,
+        border-color 250ms ease,
+        color 250ms ease,
+        fill 250ms ease,
+        stroke 250ms ease;
+    }
+  }
+}
+
+@layer utilities {
+  /* Deep navy → blue header, matching the TESDA public chrome. */
+  .bg-tesda-header {
+    background: linear-gradient(to right, #001933, #0a2463);
+  }
+  .scroll-fancy {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .scroll-fancy::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+  .scroll-fancy::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+}
