@@ -3,13 +3,25 @@ import { getSupabaseAdminClient, canSyncToSupabase } from "./supabase";
 import { parseCsv, rowsToRecords, validateNttcHeader, googleSheetCsvUrl } from "./csv";
 import { COLUMNS, TABLE_NAME, type NttcRecord } from "./columns";
 import { normalizeValue } from "./normalize";
+import { field, lastFirst, formatDate, validityStatus, type ValidityStatus } from "./nttc";
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID || "15FtN632uFrs-CvaruK3XtvJvHYotfrvsahRNIxL0peY";
 const SHEET_GID = process.env.GOOGLE_SHEET_GID || "0";
 const CHUNK = 500;
 
+/** A newly-inserted row, trimmed to the fields shown in the "added" modal. */
+export interface AddedRecord {
+  id: number;
+  name: string;
+  sector: string;
+  qualification: string;
+  cln: string;
+  validity: string; // formatted NTTC expiration date (or "—")
+  status: ValidityStatus;
+}
+
 export type SyncResult =
-  | { ok: true; count: number; syncedAt: string }
+  | { ok: true; count: number; added: AddedRecord[]; syncedAt: string }
   | { ok: false; status: number; error: string; hint?: string };
 
 /** Translate a letter-keyed record into a snake_case Supabase row. */
@@ -81,6 +93,20 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     return { ok: false, status: 422, error: "Parsed 0 records from the sheet — nothing to sync. Check the tab (gid)." };
   }
 
+  // Snapshot the existing ids first, so after the upsert we can report which
+  // rows are genuinely NEW (added) rather than edits to existing rows.
+  const existingIds = new Set<number>();
+  for (let from = 0; ; from += 1000) {
+    const { data: idRows, error: idErr } = await supabase
+      .from(TABLE_NAME)
+      .select("id")
+      .order("id")
+      .range(from, from + 999);
+    if (idErr) break; // best-effort; the upsert below surfaces real table errors
+    for (const row of idRows ?? []) existingIds.add(Number((row as { id: number }).id));
+    if (!idRows || idRows.length < 1000) break;
+  }
+
   // 3) Additive merge: upsert-by-id only. New ids are inserted, existing ids are
   //    updated. We intentionally DO NOT delete, so rows removed from the sheet
   //    are kept in the database — sync can add and edit, but never removes.
@@ -97,7 +123,21 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     }
   }
 
-  return { ok: true, count: records.length, syncedAt: new Date().toISOString() };
+  // Report the additions (rows whose id wasn't in the table before this sync),
+  // trimmed to the fields the "added" modal shows.
+  const added: AddedRecord[] = records
+    .filter((r) => !existingIds.has(r.id))
+    .map((r) => ({
+      id: r.id,
+      name: lastFirst(r),
+      sector: normalizeValue("Q", field(r, "Q")),
+      qualification: normalizeValue("R", field(r, "R")),
+      cln: field(r, "AE"),
+      validity: formatDate(field(r, "AD")),
+      status: validityStatus(r),
+    }));
+
+  return { ok: true, count: records.length, added, syncedAt: new Date().toISOString() };
 }
 
 export { SHEET_ID, SHEET_GID };
