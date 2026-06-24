@@ -34,12 +34,20 @@ function recordToRow(rec: NttcRecord): Record<string, unknown> {
   return row;
 }
 
+/** Accent/case-insensitive identity for a person + qualification row. */
+const normKey = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim().toUpperCase();
+const personKey = (last: string, first: string, qual: string) =>
+  `${normKey(last)}|${normKey(first)}|${normKey(qual)}`;
+
 /**
- * Pull the Google Sheet's published CSV and MERGE it into the Supabase registry.
+ * Pull the Google Sheet's published CSV and APPEND new people into Supabase.
  * Shared by the server action (in-app Sync button) and the REST route (cron/external).
- * Strategy: validate the sheet layout, then upsert-by-id only (additive) — new
- * rows are inserted and existing rows are updated, but rows that are missing from
- * the sheet are NEVER deleted. Sync can add and edit, never remove.
+ *
+ * Supabase is the source of truth. We add only the sheet people who are NOT already
+ * present (matched by last name + first name + qualification, accent-insensitive),
+ * giving them fresh ids after the current max. We never overwrite existing rows by
+ * position and never delete anything — sync only appends.
  */
 export async function syncRegistryFromSheet(): Promise<SyncResult> {
   if (!canSyncToSupabase) {
@@ -89,55 +97,77 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
   if (headerError) return { ok: false, status: 422, error: headerError };
 
   const records = rowsToRecords(rows);
-  if (records.length === 0) {
-    return { ok: false, status: 422, error: "Parsed 0 records from the sheet — nothing to sync. Check the tab (gid)." };
+  // Keep only rows with a real name — the sheet is padded with hundreds of
+  // province-only template rows that must never be imported.
+  const named = records.filter((r) => field(r, "C") || field(r, "D"));
+  if (named.length === 0) {
+    return { ok: false, status: 422, error: "Found 0 named people in the sheet — nothing to sync. Check the tab (gid)." };
   }
 
-  // Snapshot the existing ids first, so after the upsert we can report which
-  // rows are genuinely NEW (added) rather than edits to existing rows.
-  const existingIds = new Set<number>();
+  // 3) Load the existing registry's identity keys + current max id. Supabase is
+  //    the source of truth, so we only APPEND people not already present.
+  const existingKeys = new Set<string>();
+  let maxId = 0;
   for (let from = 0; ; from += 1000) {
-    const { data: idRows, error: idErr } = await supabase
+    const { data: dbRows, error: dbErr } = await supabase
       .from(TABLE_NAME)
-      .select("id")
+      .select("id, last_name, first_name, qualification")
       .order("id")
       .range(from, from + 999);
-    if (idErr) break; // best-effort; the upsert below surfaces real table errors
-    for (const row of idRows ?? []) existingIds.add(Number((row as { id: number }).id));
-    if (!idRows || idRows.length < 1000) break;
+    if (dbErr) {
+      return {
+        ok: false,
+        status: 500,
+        error: `Could not read the existing registry: ${dbErr.message}.`,
+        hint: "Run db/schema.sql in the Supabase SQL editor first to create the nttc_registry table.",
+      };
+    }
+    for (const row of dbRows ?? []) {
+      const r = row as { id: number; last_name: string | null; first_name: string | null; qualification: string | null };
+      // Normalize qualification on BOTH sides of the key so it matches the form
+      // recordToRow stores — otherwise normalized rows never match and re-append.
+      existingKeys.add(personKey(r.last_name ?? "", r.first_name ?? "", normalizeValue("R", r.qualification ?? "")));
+      if (r.id > maxId) maxId = r.id;
+    }
+    if (!dbRows || dbRows.length < 1000) break;
   }
 
-  // 3) Additive merge: upsert-by-id only. New ids are inserted, existing ids are
-  //    updated. We intentionally DO NOT delete, so rows removed from the sheet
-  //    are kept in the database — sync can add and edit, but never removes.
-  const data = records.map(recordToRow);
+  // Pick the new people (not already present, and de-duped within the sheet) and
+  // give them fresh ids appended after the current max.
+  const toInsert: NttcRecord[] = [];
+  for (const r of named) {
+    const key = personKey(field(r, "C"), field(r, "D"), normalizeValue("R", field(r, "R")));
+    if (existingKeys.has(key)) continue;
+    existingKeys.add(key);
+    maxId += 1;
+    toInsert.push({ ...r, id: maxId });
+  }
+
+  // Append (insert) only the new rows. No positional overwrites, no deletes.
+  const data = toInsert.map(recordToRow);
   for (let i = 0; i < data.length; i += CHUNK) {
     const { error } = await supabase.from(TABLE_NAME).upsert(data.slice(i, i + CHUNK), { onConflict: "id" });
     if (error) {
       return {
         ok: false,
         status: 500,
-        error: `Supabase upsert failed at row ${i + 1}: ${error.message}. The table may be partially updated — re-run sync.`,
+        error: `Supabase insert failed at row ${i + 1}: ${error.message}. Some rows may have been added — re-run sync (it is idempotent).`,
         hint: "Run db/schema.sql in the Supabase SQL editor first to create the nttc_registry table.",
       };
     }
   }
 
-  // Report the additions (rows whose id wasn't in the table before this sync),
-  // trimmed to the fields the "added" modal shows.
-  const added: AddedRecord[] = records
-    .filter((r) => !existingIds.has(r.id))
-    .map((r) => ({
-      id: r.id,
-      name: lastFirst(r),
-      sector: normalizeValue("Q", field(r, "Q")),
-      qualification: normalizeValue("R", field(r, "R")),
-      cln: field(r, "AE"),
-      validity: formatDate(field(r, "AD")),
-      status: validityStatus(r),
-    }));
+  const added: AddedRecord[] = toInsert.map((r) => ({
+    id: r.id,
+    name: lastFirst(r),
+    sector: normalizeValue("Q", field(r, "Q")),
+    qualification: normalizeValue("R", field(r, "R")),
+    cln: field(r, "AE"),
+    validity: formatDate(field(r, "AD")),
+    status: validityStatus(r),
+  }));
 
-  return { ok: true, count: records.length, added, syncedAt: new Date().toISOString() };
+  return { ok: true, count: named.length, added, syncedAt: new Date().toISOString() };
 }
 
 export { SHEET_ID, SHEET_GID };

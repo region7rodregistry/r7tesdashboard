@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { invalidateRegistryCache } from "@/lib/data";
 import { syncRegistryFromSheet, type SyncResult } from "@/lib/sync";
 
@@ -12,9 +12,8 @@ import { syncRegistryFromSheet, type SyncResult } from "@/lib/sync";
 export async function syncAction(): Promise<SyncResult> {
   const result = await syncRegistryFromSheet();
   if (result.ok) {
-    invalidateRegistryCache(); // drop the in-process registry memo
-    revalidateTag("registry", "max"); // drop the cached statistics read
-    revalidatePath("/");
+    invalidateRegistryCache(); // drop the in-process memo (registry + statistics)
+    revalidatePath("/"); // invalidate the client Router Cache for both routes
     revalidatePath("/statistics");
   }
   return result;

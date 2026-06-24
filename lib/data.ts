@@ -1,5 +1,4 @@
 import "server-only";
-import { unstable_cache } from "next/cache";
 import localRecords from "@/data/records.json";
 import { COLUMNS, KEY_TO_LETTER, TABLE_NAME, type NttcRecord } from "./columns";
 import { normalizeRecord, normalizeValue } from "./normalize";
@@ -79,16 +78,11 @@ async function loadRegistry(): Promise<RegistrySource> {
   return { records, source: "supabase" };
 }
 
-// Cache the (expensive) full-table Supabase read across navigations, so
-// switching between Registry and Statistics doesn't re-paginate all rows every
-// time. Invalidated immediately on Sync via revalidateTag("registry") in
-// app/actions.ts; otherwise refreshed at most once per minute (so out-of-band
-// DB edits still surface within ~60s).
 // The full row set (~2 MB) exceeds Next's 2 MB data-cache limit, so we can't use
-// unstable_cache here. Instead we memoize it in-process with a short TTL, which
-// keeps repeated reads (e.g. a Registry re-render) from re-querying Supabase.
-// Together with the client Router Cache (experimental.staleTimes), navigating
-// back to the Registry no longer reloads the data. Cleared on Sync.
+// unstable_cache. Instead we memoize it in-process with a short TTL so repeated
+// reads (Registry AND Statistics, which both go through here) don't re-query
+// Supabase. Cleared on Sync via invalidateRegistryCache() so a sync shows on the
+// next render; otherwise it refreshes at most once per minute.
 let registryMemo: { at: number; value: RegistrySource } | null = null;
 const REGISTRY_TTL_MS = 60_000;
 
@@ -114,23 +108,14 @@ export interface RegistryStatistics {
 }
 
 /**
- * Pre-aggregated statistics for the charts. We compute the (small) aggregates
- * server-side and CACHE them — well under the 2 MB limit — so switching to
- * /statistics neither re-fetches the whole table nor ships ~2 MB of records to
- * the browser (that transfer was the switch lag). Invalidated on Sync via
- * revalidateTag("registry"); otherwise refreshed at most once per minute.
+ * Pre-aggregated statistics for the charts. Computed from getRegistry() (which is
+ * memoized in-process), so the page ships only the small aggregates — never the
+ * ~2 MB of records — AND stays in lockstep with the Registry: clearing the
+ * registry memo on Sync makes these fresh too. No separate cache to fall stale.
  */
-const cachedStatistics = unstable_cache(
-  async (): Promise<RegistryStatistics> => {
-    const { records, source } = await loadRegistry();
-    return { source, data: computeStatistics(records) };
-  },
-  ["registry-statistics"],
-  { revalidate: 60, tags: ["registry"] },
-);
-
 export async function getStatistics(): Promise<RegistryStatistics> {
-  return cachedStatistics();
+  const { records, source } = await getRegistry();
+  return { source, data: computeStatistics(records) };
 }
 
 export { KEY_TO_LETTER };

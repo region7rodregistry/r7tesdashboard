@@ -33,13 +33,16 @@ export function SyncButton({ enabled, className }: SyncButtonProps) {
           return;
         }
         const n = result.added.length;
-        toast.success(`Synced ${result.count} records`, {
-          id: toastId,
-          description:
-            n > 0
-              ? `${n} new record${n === 1 ? "" : "s"} added.`
-              : "Up to date — existing records were refreshed.",
-        });
+        toast.success(
+          n > 0 ? `Added ${n} new record${n === 1 ? "" : "s"}` : "No new records to add",
+          {
+            id: toastId,
+            description:
+              n > 0
+                ? "New people from the sheet were appended to the registry."
+                : "Everyone in the sheet is already in the registry.",
+          },
+        );
         router.refresh();
         if (n > 0) {
           setAdded(result.added);
