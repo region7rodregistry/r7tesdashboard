@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:print": "echo \"Run: psql <conn> -f db/schema.sql -f db/seed.sql  (or paste into the Supabase SQL editor)\""
+    "db:print": "echo \"Run: psql <conn> -f db/schema.sql -f db/seed.sql  (or paste into the Supabase SQL editor)\"",
+    "db:seed:check": "node scripts/seed-supabase.mjs --check",
+    "db:seed": "node scripts/seed-supabase.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import {
   MapPin, Award, BadgeCheck, GraduationCap, Mail, Phone, Calendar, Hash,
 } from "lucide-react";
@@ -79,41 +80,56 @@ function RecordBody({ record }: { record: NttcRecord }) {
       <div className="bg-tesda-header relative overflow-hidden px-6 py-6 text-white">
         <div className="absolute -right-10 -top-10 size-40 rounded-full bg-white/5" />
         <div className="absolute -bottom-16 right-16 size-44 rounded-full bg-white/5" />
-        <div className="relative">
-          <div className="flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sky-200">
-            <Award className="size-3.5" />
-            NTTC Holder Record
-          </div>
-          <DialogTitle className="mt-1.5 text-2xl leading-tight font-semibold">
-            {fullName(record) || "Unnamed Record"}
-          </DialogTitle>
-          <DialogDescription className="mt-1 text-sky-100/90">
-            {field(record, "R") || "Qualification not specified"}
-          </DialogDescription>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white",
-                status === "valid" && "bg-emerald-500",
-                status === "expiring" && "bg-amber-500",
-                status === "expired" && "bg-rose-500",
-                status === "unknown" && "bg-white/20",
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sky-200">
+              <Award className="size-3.5" />
+              NTTC Holder Record
+            </div>
+            <DialogTitle className="mt-1.5 text-2xl leading-tight font-semibold">
+              {fullName(record) || "Unnamed Record"}
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-sky-100/90">
+              {field(record, "R") || "Qualification not specified"}
+            </DialogDescription>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white",
+                  status === "valid" && "bg-emerald-500",
+                  status === "expiring" && "bg-amber-500",
+                  status === "expired" && "bg-rose-500",
+                  status === "unknown" && "bg-white/20",
+                )}
+              >
+                <BadgeCheck className="size-3.5" />
+                {meta.label}
+                {days !== null && status !== "expired" && status !== "unknown" && (
+                  <span className="opacity-80">· {days}d left</span>
+                )}
+              </span>
+              {field(record, "AD") && (
+                <Badge className="border-white/20 bg-white/10 text-white">
+                  <Calendar className="size-3" /> Expires {formatDate(field(record, "AD"))}
+                </Badge>
               )}
-            >
-              <BadgeCheck className="size-3.5" />
-              {meta.label}
-              {days !== null && status !== "expired" && status !== "unknown" && (
-                <span className="opacity-80">· {days}d left</span>
-              )}
-            </span>
-            <Badge className="border-white/20 bg-white/10 text-white">
-              <MapPin className="size-3" /> {field(record, "B") || "—"}
-            </Badge>
-            <Badge className="border-white/20 bg-white/10 font-mono text-white tnum">
-              <Hash className="size-3" />
-              {field(record, "AE") || "No control no."}
-            </Badge>
+              <Badge className="border-white/20 bg-white/10 text-white">
+                <MapPin className="size-3" /> {field(record, "B") || "—"}
+              </Badge>
+              <Badge className="border-white/20 bg-white/10 font-mono text-white tnum">
+                <Hash className="size-3" />
+                {field(record, "AE") || "No control no."}
+              </Badge>
+            </div>
           </div>
+          <Image
+            src="/icons/tlogo.png"
+            alt="TESDA"
+            width={96}
+            height={96}
+            className="size-16 shrink-0 object-contain drop-shadow-md sm:size-24"
+            priority
+          />
         </div>
       </div>
 
@@ -211,7 +227,11 @@ function RecordBody({ record }: { record: NttcRecord }) {
                 label="Month / Year Issued"
                 value={[field(record, "AK"), field(record, "AL")].filter(Boolean).join(" ")}
               />
-              <InfoItem label="NTTC Expiration Same as NC" value={field(record, "AJ")} className="sm:col-span-2" />
+              <InfoItem
+                label="NTTC Expiration (Same as NC)"
+                value={field(record, "AJ") ? formatDate(field(record, "U")) : ""}
+                className="sm:col-span-2"
+              />
               <InfoItem label="Remarks" value={field(record, "AF")} className="sm:col-span-2" />
             </Section>
           </TabsContent>

@@ -125,7 +125,13 @@ export function RegistryDashboard({ records, stats }: RegistryDashboardProps) {
         </p>
       </div>
 
-      <StatCards stats={stats} />
+      <StatCards
+        stats={stats}
+        activeStatus={filters.status}
+        onSelect={(status) =>
+          updateFilters({ status: status !== "all" && filters.status === status ? "all" : status })
+        }
+      />
 
       <div className="space-y-4">
         <FiltersBar

@@ -27,7 +27,7 @@ export function AppShell({ source, syncEnabled, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="bg-tesda-header sticky top-0 z-40 border-b border-black/20 text-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/icons/tlogo.png"
@@ -72,7 +72,7 @@ export function AppShell({ source, syncEnabled, children }: AppShellProps) {
           </div>
         </div>
         <div className="border-t border-white/10 bg-black/15 px-4 py-1 sm:px-6">
-          <div className="mx-auto flex max-w-7xl items-center justify-end">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-end">
             <Badge
               variant="outline"
               className={cn(
@@ -94,10 +94,10 @@ export function AppShell({ source, syncEnabled, children }: AppShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6">{children}</main>
 
       <footer className="border-t bg-card">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <p>© {new Date().getFullYear()} TESDA Region VII · National TVET Trainer&rsquo;s Certificate Registry</p>
           <p>
             Data source:{" "}

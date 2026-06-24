@@ -67,7 +67,7 @@ export function RegistryTable({ rows, sort, onSort, onView, pageKey }: RegistryT
   return (
     <>
       {/* Desktop / tablet table */}
-      <Card className="hidden overflow-hidden py-0 md:block">
+      <Card className="hidden overflow-x-auto py-0 md:block">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">

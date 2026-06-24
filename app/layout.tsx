@@ -7,11 +7,16 @@ import { Toaster } from "@/components/ui/sonner";
 const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
+  // Only used for small mono spans (certificate numbers), not first paint —
+  // skip preloading it to avoid the "preloaded but not used" console warning.
+  preload: false,
 });
 
 export const metadata: Metadata = {

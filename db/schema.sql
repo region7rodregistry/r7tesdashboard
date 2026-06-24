@@ -93,3 +93,19 @@ CREATE INDEX idx_nttc_registry_last_name     ON nttc_registry (last_name);
 CREATE INDEX idx_nttc_registry_qualification ON nttc_registry (qualification);
 CREATE INDEX idx_nttc_registry_cln_ntc       ON nttc_registry (cln_ntc_number);
 CREATE INDEX idx_nttc_registry_nttc_cert     ON nttc_registry (nttc_certificate_number);
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security
+-- This is a PUBLIC, read-only registry. Enable RLS and allow anyone (the anon
+-- key used by the browser) to SELECT, while writes stay locked to the
+-- service-role key (which bypasses RLS) used by the Sync action.
+-- Without this policy the dashboard's anon reads return ZERO rows and the page
+-- looks empty even though the table is full.
+-- ---------------------------------------------------------------------------
+ALTER TABLE nttc_registry ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access" ON nttc_registry;
+CREATE POLICY "Public read access" ON nttc_registry
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);

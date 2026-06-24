@@ -23,7 +23,8 @@ const localTyped = localRecords as unknown as NttcRecord[];
 /**
  * Load the registry. Prefers Supabase when configured; otherwise serves the
  * bundled snapshot so the dashboard works out of the box. Falls back to the
- * snapshot if a Supabase query errors.
+ * snapshot if a Supabase query errors OR returns zero rows (table not created /
+ * not seeded / RLS blocking reads) — so the dashboard is never blank.
  */
 export async function getRegistry(): Promise<RegistrySource> {
   const supabase = getSupabaseReadClient();
@@ -32,13 +33,39 @@ export async function getRegistry(): Promise<RegistrySource> {
   }
 
   const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(", ");
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .select(selectCols)
-    .order("id", { ascending: true });
 
-  if (error || !data) {
-    console.error("[data] Supabase read failed, using local snapshot:", error?.message);
+  // PostgREST caps each response at ~1000 rows, so a single .select() silently
+  // truncates large tables. Page through with .range() until a short page tells
+  // us we've reached the end, then concatenate.
+  const PAGE = 1000;
+  const data: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await supabase
+      .from(TABLE_NAME)
+      .select(selectCols)
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+
+    if (error) {
+      console.error(
+        `[data] Supabase read failed (${error.message}). ` +
+          `Run db/schema.sql + db/seed.sql in Supabase. Serving local snapshot.`,
+      );
+      return { records: localTyped, source: "local" };
+    }
+
+    const rows = (page ?? []) as unknown as Record<string, unknown>[];
+    data.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+
+  if (data.length === 0) {
+    console.warn(
+      "[data] Supabase '" +
+        TABLE_NAME +
+        "' returned 0 rows — table is empty, not created, or RLS is blocking anon reads. " +
+        "Run db/schema.sql + db/seed.sql (and allow anon SELECT or disable RLS). Serving local snapshot.",
+    );
     return { records: localTyped, source: "local" };
   }
 
