@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import {
-  MapPin, Award, BadgeCheck, GraduationCap, Mail, Phone, Calendar, Hash,
+  MapPin, Award, BadgeCheck, GraduationCap, Mail, Phone, Calendar, Hash, Barcode,
 } from "lucide-react";
 import {
   Dialog,
@@ -115,6 +115,10 @@ function RecordBody({ record }: { record: NttcRecord }) {
               )}
               <Badge className="border-white/20 bg-white/10 text-white">
                 <MapPin className="size-3" /> {field(record, "B") || "—"}
+              </Badge>
+              <Badge className="border-white/20 bg-white/10 font-mono text-white tnum">
+                <Barcode className="size-3" />
+                {field(record, "AB") || "No serial no."}
               </Badge>
               <Badge className="border-white/20 bg-white/10 font-mono text-white tnum">
                 <Hash className="size-3" />
@@ -229,7 +233,7 @@ function RecordBody({ record }: { record: NttcRecord }) {
               />
               <InfoItem
                 label="NTTC Expiration (Same as NC)"
-                value={field(record, "AJ") ? formatDate(field(record, "U")) : ""}
+                value={formatDate(field(record, "U"))}
                 className="sm:col-span-2"
               />
               <InfoItem label="Remarks" value={field(record, "AF")} className="sm:col-span-2" />

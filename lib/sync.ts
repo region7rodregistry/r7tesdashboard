@@ -2,6 +2,7 @@ import "server-only";
 import { getSupabaseAdminClient, canSyncToSupabase } from "./supabase";
 import { parseCsv, rowsToRecords, validateNttcHeader, googleSheetCsvUrl } from "./csv";
 import { COLUMNS, TABLE_NAME, type NttcRecord } from "./columns";
+import { normalizeValue } from "./normalize";
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID || "15FtN632uFrs-CvaruK3XtvJvHYotfrvsahRNIxL0peY";
 const SHEET_GID = process.env.GOOGLE_SHEET_GID || "0";
@@ -15,16 +16,18 @@ export type SyncResult =
 function recordToRow(rec: NttcRecord): Record<string, unknown> {
   const row: Record<string, unknown> = { id: rec.id };
   for (const col of COLUMNS) {
-    row[col.key] = (rec[col.letter] as string | null) ?? null;
+    const v = (rec[col.letter] as string | null) ?? null;
+    row[col.key] = v === null ? null : normalizeValue(col.letter, v);
   }
   return row;
 }
 
 /**
- * Pull the Google Sheet's published CSV and overwrite the Supabase registry.
+ * Pull the Google Sheet's published CSV and MERGE it into the Supabase registry.
  * Shared by the server action (in-app Sync button) and the REST route (cron/external).
- * Strategy: validate the sheet layout, then upsert-by-id and prune ids beyond the
- * new max — so the table is never empty mid-run and shrinks are reflected.
+ * Strategy: validate the sheet layout, then upsert-by-id only (additive) — new
+ * rows are inserted and existing rows are updated, but rows that are missing from
+ * the sheet are NEVER deleted. Sync can add and edit, never remove.
  */
 export async function syncRegistryFromSheet(): Promise<SyncResult> {
   if (!canSyncToSupabase) {
@@ -78,9 +81,10 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     return { ok: false, status: 422, error: "Parsed 0 records from the sheet — nothing to sync. Check the tab (gid)." };
   }
 
-  // 3) Overwrite (upsert-then-prune).
+  // 3) Additive merge: upsert-by-id only. New ids are inserted, existing ids are
+  //    updated. We intentionally DO NOT delete, so rows removed from the sheet
+  //    are kept in the database — sync can add and edit, but never removes.
   const data = records.map(recordToRow);
-  const maxId = records.length;
   for (let i = 0; i < data.length; i += CHUNK) {
     const { error } = await supabase.from(TABLE_NAME).upsert(data.slice(i, i + CHUNK), { onConflict: "id" });
     if (error) {
@@ -91,10 +95,6 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
         hint: "Run db/schema.sql in the Supabase SQL editor first to create the nttc_registry table.",
       };
     }
-  }
-  const { error: pruneError } = await supabase.from(TABLE_NAME).delete().gt("id", maxId);
-  if (pruneError) {
-    return { ok: false, status: 500, error: `Synced rows but failed to prune stale rows: ${pruneError.message}` };
   }
 
   return { ok: true, count: records.length, syncedAt: new Date().toISOString() };

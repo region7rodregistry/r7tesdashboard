@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Download } from "lucide-react";
+import { FileText, FileSpreadsheet } from "lucide-react";
+import { toast } from "sonner";
 import { StatCards } from "./stat-cards";
 import { FiltersBar, type FilterState } from "./filters-bar";
 import { RegistryTable, type SortKey, type SortState } from "./registry-table";
 import { PaginationBar } from "./pagination-bar";
 import { RecordDialog } from "./record-dialog";
-import { Button } from "@/components/ui/button";
+import { ExportMenu, type ExportMenuItem } from "./export-menu";
 import {
   Select,
   SelectContent,
@@ -15,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { COLUMNS, type NttcRecord } from "@/lib/columns";
+import { type NttcRecord } from "@/lib/columns";
 import { field, parseDate, uniqueSorted, validityStatus, type RegistryStats } from "@/lib/nttc";
+import { exportRegistryCsv, exportRegistryXlsx, prettyDate } from "@/lib/export";
 
 interface RegistryDashboardProps {
   records: NttcRecord[];
@@ -37,7 +39,7 @@ export function RegistryDashboard({ records, stats }: RegistryDashboardProps) {
   const [filters, setFilters] = React.useState<FilterState>(DEFAULT_FILTERS);
   const [sort, setSort] = React.useState<SortState>({ key: "C", dir: "asc" });
   const [page, setPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(25);
+  const [pageSize, setPageSize] = React.useState(15);
   const [selected, setSelected] = React.useState<NttcRecord | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
@@ -99,22 +101,50 @@ export function RegistryDashboard({ records, stats }: RegistryDashboardProps) {
     setDialogOpen(true);
   }, []);
 
-  const exportCsv = React.useCallback(() => {
-    const header = COLUMNS.map((c) => `"${c.label}"`).join(",");
-    const lines = sorted.map((r) =>
-      COLUMNS.map((c) => `"${String((r[c.letter] as string | null) ?? "").replace(/"/g, '""')}"`).join(","),
-    );
-    const csv = [header, ...lines].join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `nttc-registry-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  // Both exports are filter-adaptive: they use `sorted`, the current
+  // filtered + sorted record set.
+  const handleExportCsv = React.useCallback(() => {
+    try {
+      exportRegistryCsv(sorted, `NTTC Registry as of - ${prettyDate()}.csv`);
+      toast.success(`Exported ${sorted.length.toLocaleString()} records to CSV`);
+    } catch (e) {
+      console.error(e);
+      toast.error("CSV export failed. Please try again.");
+    }
   }, [sorted]);
+
+  const handleExportXlsx = React.useCallback(async () => {
+    try {
+      await exportRegistryXlsx(sorted, `NTTC Registry as of - ${prettyDate()}.xlsx`, {
+        generatedAt: new Date().toLocaleString(),
+        totalRecords: sorted.length,
+      });
+      toast.success(`Exported ${sorted.length.toLocaleString()} records to Excel`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Excel export failed. Please try again.");
+    }
+  }, [sorted]);
+
+  const exportItems = React.useMemo<ExportMenuItem[]>(
+    () => [
+      {
+        key: "csv",
+        label: "CSV (.csv)",
+        description: "Raw data — same column layout as the database seed",
+        icon: <FileText className="size-4" />,
+        onSelect: handleExportCsv,
+      },
+      {
+        key: "xlsx",
+        label: "Excel workbook (.xlsx)",
+        description: "Formatted, labeled columns with filters & freeze",
+        icon: <FileSpreadsheet className="size-4" />,
+        onSelect: handleExportXlsx,
+      },
+    ],
+    [handleExportCsv, handleExportXlsx],
+  );
 
   return (
     <div className="space-y-6">
@@ -152,7 +182,7 @@ export function RegistryDashboard({ records, stats }: RegistryDashboardProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[25, 50, 100].map((n) => (
+                {[15, 25, 50, 100].map((n) => (
                   <SelectItem key={n} value={String(n)}>
                     {n}
                   </SelectItem>
@@ -160,9 +190,11 @@ export function RegistryDashboard({ records, stats }: RegistryDashboardProps) {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" size="sm" onClick={exportCsv}>
-            <Download className="size-4" /> Export {sorted.length.toLocaleString()} records
-          </Button>
+          <ExportMenu
+            items={exportItems}
+            label={`Export ${sorted.length.toLocaleString()} records`}
+            disabled={sorted.length === 0}
+          />
         </div>
 
         <RegistryTable
