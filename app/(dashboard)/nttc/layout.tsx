@@ -7,15 +7,16 @@ import { canSyncToSupabase } from "@/lib/supabase";
  * each page) means it survives Registry<->Statistics navigation, so the
  * active-tab indicator can slide between tabs and only the body below swaps.
  *
- * Not async: the source label is streamed to the header via a promise (read
- * with `use()` behind a small Suspense), so this layout never blocks rendering.
+ * The source read is memoized (see getRegistry), so awaiting it here is cheap,
+ * and because layouts persist it only runs once per entry into the section —
+ * not on every tab switch.
  */
-export default function NttcLayout({ children }: { children: React.ReactNode }) {
-  const sourcePromise = getRegistrySource();
+export default async function NttcLayout({ children }: { children: React.ReactNode }) {
+  const source = await getRegistrySource();
 
   return (
     <>
-      <NttcHeader sourcePromise={sourcePromise} syncEnabled={canSyncToSupabase} />
+      <NttcHeader source={source} syncEnabled={canSyncToSupabase} />
       {children}
     </>
   );

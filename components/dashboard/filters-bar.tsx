@@ -29,7 +29,7 @@ interface FiltersBarProps {
   onReset: () => void;
   provinces: string[];
   sectors: string[];
-  /** When provided (and non-empty), renders a "Name of Institution" dropdown. */
+  /** When provided (and non-empty), renders an entity dropdown. */
   institutions?: string[];
   total: number;
   filtered: number;
@@ -37,6 +37,10 @@ interface FiltersBarProps {
   searchPlaceholder?: string;
   /** Noun for the count line, e.g. "records" (default) or "programs". */
   noun?: string;
+  /** Trigger placeholder for the entity dropdown. Defaults to "Institution". */
+  institutionLabel?: string;
+  /** "All …" option label for the entity dropdown. Defaults to "All Institutions". */
+  institutionAllLabel?: string;
 }
 
 const ALL = "__all__";
@@ -52,6 +56,8 @@ export function FiltersBar({
   filtered,
   searchPlaceholder = "Search name, certificate, control number, qualification…",
   noun = "records",
+  institutionLabel = "Institution",
+  institutionAllLabel = "All Institutions",
 }: FiltersBarProps) {
   const hasInstitutions = Boolean(institutions && institutions.length > 0);
   const hasFilters =
@@ -116,13 +122,13 @@ export function FiltersBar({
               }
               onValueChange={(v) => onChange({ institution: v === ALL ? "all" : v })}
             >
-              <SelectTrigger className="lg:w-60" aria-label="Filter by institution">
-                <SelectValue placeholder="Institution" />
+              <SelectTrigger className="lg:w-52" aria-label={`Filter by ${institutionLabel.toLowerCase()}`}>
+                <SelectValue placeholder={institutionLabel} />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All Institutions</SelectItem>
+              <SelectContent className="max-w-[min(22rem,calc(100vw-2rem))]">
+                <SelectItem value={ALL}>{institutionAllLabel}</SelectItem>
                 {institutions!.map((inst) => (
-                  <SelectItem key={inst} value={inst}>
+                  <SelectItem key={inst} value={inst} className="[&>span:last-child]:min-w-0 [&>span:last-child]:truncate">
                     {inst}
                   </SelectItem>
                 ))}

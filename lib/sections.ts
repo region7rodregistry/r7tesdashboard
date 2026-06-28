@@ -48,8 +48,8 @@ export const SECTIONS: Section[] = [
     label: "PTCACs",
     href: "/ptcacs",
     icon: ClipboardCheck,
-    description: "Competency assessment centers and accreditation records.",
-    available: false,
+    description: "Accredited competency assessment centers & assessors.",
+    available: true,
   },
   {
     key: "utpras",

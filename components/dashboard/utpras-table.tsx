@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Eye, ArrowUpDown, ArrowUp, ArrowDown, FileSearch, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,10 +37,9 @@ interface UtprasTableProps {
   sort: SortState;
   onSort: (key: SortKey) => void;
   onView: (record: UtprasRecord) => void;
-  pageKey: string | number;
 }
 
-export function UtprasTable({ rows, sort, onSort, onView, pageKey }: UtprasTableProps) {
+export function UtprasTable({ rows, sort, onSort, onView }: UtprasTableProps) {
   if (rows.length === 0) {
     return (
       <Card className="items-center justify-center gap-3 py-20 text-center">
@@ -101,13 +99,10 @@ export function UtprasTable({ rows, sort, onSort, onView, pageKey }: UtprasTable
               </TableHead>
             </TableRow>
           </TableHeader>
-          <motion.tbody key={pageKey} className="[&_tr:last-child]:border-0">
-            {rows.map((row, i) => (
-              <motion.tr
+          <tbody className="[&_tr:last-child]:border-0">
+            {rows.map((row) => (
+              <tr
                 key={row.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: Math.min(i * 0.012, 0.3) }}
                 onClick={() => onView(row)}
                 className="group cursor-pointer border-b border-border/60 transition-colors hover:bg-muted/50"
               >
@@ -138,20 +133,17 @@ export function UtprasTable({ rows, sort, onSort, onView, pageKey }: UtprasTable
                     <Eye className="size-3.5" /> View
                   </Button>
                 </TableCell>
-              </motion.tr>
+              </tr>
             ))}
-          </motion.tbody>
+          </tbody>
         </Table>
       </Card>
 
       {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
-        {rows.map((row, i) => (
-          <motion.button
+        {rows.map((row) => (
+          <button
             key={row.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: Math.min(i * 0.02, 0.3) }}
             onClick={() => onView(row)}
             className="w-full rounded-xl bg-card p-4 text-left ring-1 ring-foreground/10 transition-colors active:bg-muted/50"
           >
@@ -187,7 +179,7 @@ export function UtprasTable({ rows, sort, onSort, onView, pageKey }: UtprasTable
             <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary">
               <Eye className="size-3.5" /> View full record
             </span>
-          </motion.button>
+          </button>
         ))}
       </div>
     </>

@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet, Building2, Database, HardDrive } from "lucide-react";
 import { toast } from "sonner";
-import { UtprasStatCards } from "./utpras-stat-cards";
+import { PtcacsStatCards } from "./ptcacs-stat-cards";
 import { FiltersBar, type FilterState } from "./filters-bar";
-import { UtprasTable, type SortKey, type SortState } from "./utpras-table";
+import { CentersTable, type SortKey, type SortState } from "./centers-table";
 import { PaginationBar } from "./pagination-bar";
-import { UtprasRecordDialog } from "./utpras-record-dialog";
+import { CenterRecordDialog } from "./center-record-dialog";
 import { ExportMenu, type ExportMenuItem } from "./export-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,14 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type UtprasRecord } from "@/lib/utpras-columns";
-import { field, uniqueSorted, validityStatus, type UtprasStats } from "@/lib/utpras";
-import { exportUtprasCsv, exportUtprasXlsx } from "@/lib/utpras-export";
+import { CENTER_COLUMNS, type PtcacsRecord } from "@/lib/ptcacs-columns";
+import { field, uniqueSorted, validityStatus, type PtcacsStats } from "@/lib/ptcacs";
+import { exportPtcacsCsv, exportPtcacsXlsx } from "@/lib/ptcacs-export";
 import { prettyDate } from "@/lib/export";
+import { cn } from "@/lib/utils";
 
-interface UtprasDashboardProps {
-  records: UtprasRecord[];
-  stats: UtprasStats;
+interface CentersDashboardProps {
+  records: PtcacsRecord[];
+  stats: PtcacsStats;
+  source: "supabase" | "local";
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -36,44 +39,36 @@ const DEFAULT_FILTERS: FilterState = {
 
 // Columns scanned by the free-text search box.
 const SEARCH_FIELDS = [
-  "institution_name", "course_program", "address", "institution_head",
-  "tel_no", "email", "program_reg_no", "municipality", "province", "sector",
-  "unique_institution_id", "formerly_name",
+  "assessment_center", "qualification_title", "address", "center_manager",
+  "tel_no", "accreditation_number", "province", "sector",
 ];
 
-export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
+export function CentersDashboard({ records, stats, source }: CentersDashboardProps) {
   const [filters, setFilters] = React.useState<FilterState>(DEFAULT_FILTERS);
-  const [sort, setSort] = React.useState<SortState>({ key: "institution_name", dir: "asc" });
+  const [sort, setSort] = React.useState<SortState>({ key: "assessment_center", dir: "asc" });
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(15);
-  const [selected, setSelected] = React.useState<UtprasRecord | null>(null);
+  const [selected, setSelected] = React.useState<PtcacsRecord | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  // Keep the search input snappy: the box updates instantly while the (heavier)
-  // filtering runs against a deferred copy at lower priority — no per-keystroke
-  // re-scan of every record.
   const deferredSearch = React.useDeferredValue(filters.search);
 
   const provinces = React.useMemo(() => uniqueSorted(records, "province"), [records]);
   const sectors = React.useMemo(() => uniqueSorted(records, "sector"), [records]);
-  // Institutions narrow to the chosen province so the dropdown stays relevant.
-  const institutions = React.useMemo(() => {
+  // Centers narrow to the chosen province so the dropdown stays relevant.
+  const centers = React.useMemo(() => {
     const scope =
       filters.province === "all"
         ? records
         : records.filter((r) => field(r, "province") === filters.province);
-    return uniqueSorted(scope, "institution_name");
+    return uniqueSorted(scope, "assessment_center");
   }, [records, filters.province]);
 
   const filtered = React.useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     return records.filter((r) => {
       if (filters.province !== "all" && field(r, "province") !== filters.province) return false;
-      if (
-        filters.institution &&
-        filters.institution !== "all" &&
-        field(r, "institution_name") !== filters.institution
-      )
+      if (filters.institution && filters.institution !== "all" && field(r, "assessment_center") !== filters.institution)
         return false;
       if (filters.sector !== "all" && field(r, "sector") !== filters.sector) return false;
       if (filters.status !== "all" && validityStatus(r) !== filters.status) return false;
@@ -89,9 +84,7 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
     const arr = [...filtered];
     const { key, dir } = sort;
     const mult = dir === "asc" ? 1 : -1;
-    arr.sort(
-      (a, b) => field(a, key).localeCompare(field(b, key), "en", { numeric: true }) * mult,
-    );
+    arr.sort((a, b) => field(a, key).localeCompare(field(b, key), "en", { numeric: true }) * mult);
     return arr;
   }, [filtered, sort]);
 
@@ -109,13 +102,7 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
   const updateFilters = React.useCallback((next: Partial<FilterState>) => {
     setFilters((prev) => {
       const merged = { ...prev, ...next };
-      // Changing province re-scopes the institution list, so clear any stale
-      // institution selection (unless the caller set one explicitly).
-      if (
-        next.province !== undefined &&
-        next.province !== prev.province &&
-        next.institution === undefined
-      ) {
+      if (next.province !== undefined && next.province !== prev.province && next.institution === undefined) {
         merged.institution = "all";
       }
       return merged;
@@ -128,15 +115,15 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
     );
   }, []);
 
-  const handleView = React.useCallback((record: UtprasRecord) => {
+  const handleView = React.useCallback((record: PtcacsRecord) => {
     setSelected(record);
     setDialogOpen(true);
   }, []);
 
   const handleExportCsv = React.useCallback(() => {
     try {
-      exportUtprasCsv(sorted, `UTPRAS Registry as of - ${prettyDate()}.csv`);
-      toast.success(`Exported ${sorted.length.toLocaleString()} programs to CSV`);
+      exportPtcacsCsv(sorted, CENTER_COLUMNS, `Assessment Centers as of - ${prettyDate()}.csv`);
+      toast.success(`Exported ${sorted.length.toLocaleString()} records to CSV`);
     } catch (e) {
       console.error(e);
       toast.error("CSV export failed. Please try again.");
@@ -145,11 +132,14 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
 
   const handleExportXlsx = React.useCallback(async () => {
     try {
-      await exportUtprasXlsx(sorted, `UTPRAS Registry as of - ${prettyDate()}.xlsx`, {
+      await exportPtcacsXlsx(sorted, CENTER_COLUMNS, `Assessment Centers as of - ${prettyDate()}.xlsx`, {
+        sheetName: "Assessment Centers",
+        title: "Accredited Assessment Centers",
+        note: "Accredited Competency Assessment Centers. Reflects the filters applied at export time.",
         generatedAt: new Date().toLocaleString(),
         totalRecords: sorted.length,
       });
-      toast.success(`Exported ${sorted.length.toLocaleString()} programs to Excel`);
+      toast.success(`Exported ${sorted.length.toLocaleString()} records to Excel`);
     } catch (e) {
       console.error(e);
       toast.error("Excel export failed. Please try again.");
@@ -178,15 +168,34 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Program Registry</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse and search registered &amp; accredited TVET programs across Region VII.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Accredited Assessment Centers</h2>
+          <p className="text-sm text-muted-foreground">
+            Browse and search TESDA-accredited competency assessment centers across Region VII.
+          </p>
+        </div>
+        <Badge
+          variant="outline"
+          className={cn(
+            "gap-1 text-[11px]",
+            source === "supabase"
+              ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+              : "text-muted-foreground",
+          )}
+        >
+          {source === "supabase" ? (
+            <><Database className="size-3" /> Live · Supabase</>
+          ) : (
+            <><HardDrive className="size-3" /> Local snapshot</>
+          )}
+        </Badge>
       </div>
 
-      <UtprasStatCards
+      <PtcacsStatCards
         stats={stats}
+        totalLabel="Total Centers"
+        totalIcon={Building2}
         activeStatus={filters.status}
         onSelect={(status) =>
           updateFilters({ status: status !== "all" && filters.status === status ? "all" : status })
@@ -200,11 +209,13 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
           onReset={() => setFilters(DEFAULT_FILTERS)}
           provinces={provinces}
           sectors={sectors}
-          institutions={institutions}
+          institutions={centers}
+          institutionLabel="Center"
+          institutionAllLabel="All Centers"
           total={records.length}
           filtered={sorted.length}
-          searchPlaceholder="Search institution, qualification, address, reg. no.…"
-          noun="programs"
+          searchPlaceholder="Search center, qualification, manager, accreditation no.…"
+          noun="records"
         />
 
         <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
@@ -225,17 +236,17 @@ export function UtprasDashboard({ records, stats }: UtprasDashboardProps) {
           </div>
           <ExportMenu
             items={exportItems}
-            label={`Export ${sorted.length.toLocaleString()} programs`}
+            label={`Export ${sorted.length.toLocaleString()} records`}
             disabled={sorted.length === 0}
           />
         </div>
 
-        <UtprasTable rows={pageRows} sort={sort} onSort={handleSort} onView={handleView} />
+        <CentersTable rows={pageRows} sort={sort} onSort={handleSort} onView={handleView} />
 
         <PaginationBar page={currentPage} totalPages={totalPages} onPage={setPage} />
       </div>
 
-      <UtprasRecordDialog record={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <CenterRecordDialog record={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

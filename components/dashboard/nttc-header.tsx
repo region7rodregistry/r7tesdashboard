@@ -1,20 +1,17 @@
 "use client";
 
-import { Suspense, use } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { BookMarked, ChartPie, Database, HardDrive } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SyncButton } from "./sync-button";
 import { cn } from "@/lib/utils";
 
 type Source = "supabase" | "local";
 
 interface NttcHeaderProps {
-  /** Streamed from the layout so the header renders instantly (badge fills in). */
-  sourcePromise: Promise<Source>;
+  source: Source;
   syncEnabled: boolean;
 }
 
@@ -26,37 +23,12 @@ const TABS = [
 // Matches the sidebar's sliding-indicator feel.
 const TAB_SPRING = { type: "spring", stiffness: 380, damping: 32 } as const;
 
-function SourceBadge({ sourcePromise }: { sourcePromise: Promise<Source> }) {
-  const source = use(sourcePromise);
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "gap-1 text-[11px]",
-        source === "supabase"
-          ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-          : "text-muted-foreground",
-      )}
-    >
-      {source === "supabase" ? (
-        <>
-          <Database className="size-3" /> Live · Supabase
-        </>
-      ) : (
-        <>
-          <HardDrive className="size-3" /> Local snapshot
-        </>
-      )}
-    </Badge>
-  );
-}
-
 /**
  * Section header for the NTTC module. Lives in the NTTC layout so it persists
  * across the Registry/Statistics tabs — which lets the active-tab indicator
  * slide smoothly between them (shared layoutId) instead of hard-cutting.
  */
-export function NttcHeader({ sourcePromise, syncEnabled }: NttcHeaderProps) {
+export function NttcHeader({ source, syncEnabled }: NttcHeaderProps) {
   const pathname = usePathname();
 
   return (
@@ -99,9 +71,25 @@ export function NttcHeader({ sourcePromise, syncEnabled }: NttcHeaderProps) {
 
         <SyncButton enabled={syncEnabled} />
 
-        <Suspense fallback={<Skeleton className="h-5 w-24 rounded-full" />}>
-          <SourceBadge sourcePromise={sourcePromise} />
-        </Suspense>
+        <Badge
+          variant="outline"
+          className={cn(
+            "gap-1 text-[11px]",
+            source === "supabase"
+              ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+              : "text-muted-foreground",
+          )}
+        >
+          {source === "supabase" ? (
+            <>
+              <Database className="size-3" /> Live · Supabase
+            </>
+          ) : (
+            <>
+              <HardDrive className="size-3" /> Local snapshot
+            </>
+          )}
+        </Badge>
       </div>
     </div>
   );

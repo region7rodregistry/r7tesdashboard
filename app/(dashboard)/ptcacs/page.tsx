@@ -1,8 +1,8 @@
-import { ComingSoon } from "@/components/sections/coming-soon";
-import { getSection } from "@/lib/sections";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "PTCACs — Regional Dashboard VII" };
 
+// PTCACs lands on the Assessment Centers tab.
 export default function PtcacsPage() {
-  return <ComingSoon section={getSection("ptcacs")} />;
+  redirect("/ptcacs/centers");
 }
