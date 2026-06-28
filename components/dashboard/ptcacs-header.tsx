@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Building2, UserCheck, ClipboardCheck } from "lucide-react";
+import { Building2, UserCheck, ClipboardCheck, ChartPie } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { label: "Assessment Centers", href: "/ptcacs/centers", icon: Building2 },
   { label: "Assessors", href: "/ptcacs/assessors", icon: UserCheck },
+  { label: "Statistics", href: "/ptcacs/statistics", icon: ChartPie },
 ];
 
 // Matches the sidebar's sliding-indicator feel.

@@ -65,7 +65,7 @@ export function PtcacsStatCards({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
             whileHover={{ y: -4 }}
-            className="text-left focus-visible:outline-none"
+            className="rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Card
               className={cn(

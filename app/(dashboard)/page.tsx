@@ -9,11 +9,15 @@ import {
 } from "lucide-react";
 import { getRegistry } from "@/lib/data";
 import { computeStats } from "@/lib/nttc";
+import { getUtprasRegistry } from "@/lib/utpras-data";
+import { getAssessmentCenters } from "@/lib/ptcacs-data";
+import { getUnifiedSchools, computeUnifiedOverview } from "@/lib/schools-unified";
 import { SECTIONS, type Section } from "@/lib/sections";
+import { OverviewTabs } from "@/components/dashboard/overview-tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-// Reads the live registry for the NTTC headline numbers.
+// Reads the live registries for the headline numbers + unified school directory.
 export const dynamic = "force-dynamic";
 
 interface Tile {
@@ -25,8 +29,15 @@ interface Tile {
 }
 
 export default async function OverviewPage() {
-  const { records, source } = await getRegistry();
-  const stats = computeStats(records);
+  const [{ records: nttc, source }, { records: utpras }, { records: centers }] = await Promise.all([
+    getRegistry(),
+    getUtprasRegistry(),
+    getAssessmentCenters(),
+  ]);
+
+  const stats = computeStats(nttc);
+  const schools = getUnifiedSchools(utpras, centers);
+  const schoolsOverview = computeUnifiedOverview(schools);
 
   const tiles: Tile[] = [
     { label: "NTTC Holders", value: stats.total, icon: Users, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-100 dark:bg-sky-500/15" },
@@ -37,15 +48,8 @@ export default async function OverviewPage() {
 
   const modules = SECTIONS.filter((s) => s.key !== "overview");
 
-  return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
-        <p className="text-sm text-muted-foreground">
-          Regional Dashboard VII · TESDA Region VII · Central Visayas
-        </p>
-      </header>
-
+  const summary = (
+    <>
       {/* Live NTTC headline */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -89,6 +93,19 @@ export default async function OverviewPage() {
           ))}
         </div>
       </section>
+    </>
+  );
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+        <p className="text-sm text-muted-foreground">
+          Regional Dashboard VII · TESDA Region VII · Central Visayas
+        </p>
+      </header>
+
+      <OverviewTabs summary={summary} schools={schools} overview={schoolsOverview} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   HardDrive,
   BookMarked,
   GraduationCap,
+  ChartPie,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ interface UtprasHeaderProps {
 const TABS = [
   { label: "Programs", href: "/utpras", icon: BookMarked },
   { label: "Schools", href: "/utpras/schools", icon: GraduationCap },
+  { label: "Statistics", href: "/utpras/statistics", icon: ChartPie },
 ];
 
 // Matches the sidebar's sliding-indicator feel.

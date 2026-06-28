@@ -9,6 +9,7 @@ import {
   type PtcacsColumnDef,
   type PtcacsRecord,
 } from "./ptcacs-columns";
+import { computePtcacsStatistics, type PtcacsStatsData } from "./ptcacs-stats";
 import { getSupabaseReadClient } from "./supabase";
 
 export interface PtcacsSource {
@@ -119,4 +120,32 @@ export async function getAssessors(): Promise<PtcacsSource> {
 export function invalidatePtcacsCache(): void {
   centersMemo = null;
   assessorsMemo = null;
+}
+
+export interface PtcacsStatistics {
+  source: PtcacsSource["source"];
+  centers: PtcacsStatsData;
+  assessors: PtcacsStatsData;
+}
+
+/**
+ * Pre-aggregated statistics for BOTH PTCACs registries, computed from the
+ * memoized reads. The Statistics page ships only the small aggregates and lets
+ * the user toggle between Assessment Centers and Assessors. The source is
+ * "supabase" when either registry came from Supabase.
+ */
+export async function getPtcacsStatistics(): Promise<PtcacsStatistics> {
+  const [centers, assessors] = await Promise.all([
+    getAssessmentCenters(),
+    getAssessors(),
+  ]);
+  const source =
+    centers.source === "supabase" || assessors.source === "supabase"
+      ? "supabase"
+      : "local";
+  return {
+    source,
+    centers: computePtcacsStatistics(centers.records, "centers", "assessment_center"),
+    assessors: computePtcacsStatistics(assessors.records, "assessors", "name"),
+  };
 }

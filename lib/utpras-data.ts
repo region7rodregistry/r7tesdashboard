@@ -5,6 +5,7 @@ import {
   UTPRAS_TABLE_NAME,
   type UtprasRecord,
 } from "./utpras-columns";
+import { computeUtprasStatistics, type UtprasStatsData } from "./utpras-stats";
 import { getSupabaseReadClient } from "./supabase";
 
 export interface UtprasSource {
@@ -100,4 +101,19 @@ export async function getUtprasRegistry(): Promise<UtprasSource> {
 /** Drop the in-process UTPRAS memo. */
 export function invalidateUtprasCache(): void {
   utprasMemo = null;
+}
+
+export interface UtprasStatistics {
+  source: UtprasSource["source"];
+  data: UtprasStatsData;
+}
+
+/**
+ * Pre-aggregated UTPRAS statistics for the charts. Computed from the memoized
+ * registry read, so the page ships only the small aggregates (never the full
+ * record set) and stays in lockstep with the Programs tab.
+ */
+export async function getUtprasStatistics(): Promise<UtprasStatistics> {
+  const { records, source } = await getUtprasRegistry();
+  return { source, data: computeUtprasStatistics(records) };
 }
