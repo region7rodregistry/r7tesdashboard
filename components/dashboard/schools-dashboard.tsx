@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { PaginationBar } from "./pagination-bar";
 import { SchoolDetail } from "./school-detail";
-import type { School as SchoolType, SchoolsOverview } from "@/lib/utpras-schools";
+import { locationLabel, type School as SchoolType, type SchoolsOverview } from "@/lib/utpras-schools";
 
 interface SchoolsDashboardProps {
   schools: SchoolType[];
@@ -64,9 +64,7 @@ export function SchoolsDashboard({ schools, overview }: SchoolsDashboardProps) {
 
   const provinces = React.useMemo(
     () =>
-      Array.from(new Set(schools.map((s) => s.province).filter(Boolean))).sort((a, b) =>
-        a.localeCompare(b),
-      ),
+      Array.from(new Set(schools.flatMap((s) => s.provinces))).sort((a, b) => a.localeCompare(b)),
     [schools],
   );
   const sectors = React.useMemo(
@@ -78,10 +76,10 @@ export function SchoolsDashboard({ schools, overview }: SchoolsDashboardProps) {
   const filtered = React.useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     const arr = schools.filter((s) => {
-      if (province !== "all" && s.province !== province) return false;
+      if (province !== "all" && !s.provinces.includes(province)) return false;
       if (sector !== "all" && !s.sectors.includes(sector)) return false;
       if (q) {
-        const hay = [s.name, s.municipality, s.province, s.address, s.institution_head]
+        const hay = [s.name, s.municipalities.join(" "), s.provinces.join(" "), s.address, s.institution_head]
           .join(" ")
           .toLowerCase();
         if (!hay.includes(q)) return false;
@@ -268,13 +266,17 @@ function SchoolCard({
   delay: number;
   onOpen: () => void;
 }) {
-  const location = [school.municipality, school.province].filter(Boolean).join(", ");
+  const location = locationLabel(school);
   const sectorLabel =
     school.sectors.length === 0
       ? null
       : school.sectors.length === 1
         ? school.sectors[0]
         : `${school.sectors.length} sectors`;
+  // Programs with no/unparseable expiry aren't counted in valid/expiring/expired,
+  // so surface them too — otherwise the pills wouldn't reconcile with the total.
+  const noDate =
+    school.programs.length - (school.stats.valid + school.stats.expiring + school.stats.expired);
 
   return (
     <motion.button
@@ -284,7 +286,7 @@ function SchoolCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(delay, 8) * 0.04 }}
       whileHover={{ y: -4 }}
-      className="text-left focus-visible:outline-none"
+      className="rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       title={`Open ${school.name}`}
     >
       <Card className="h-full gap-4 p-5 transition-all hover:ring-2 hover:ring-primary/30 hover:shadow-md">
@@ -336,6 +338,12 @@ function SchoolCard({
                 </span>
               );
             })}
+            {noDate > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                {noDate.toLocaleString()} no date
+              </span>
+            )}
           </div>
         </div>
       </Card>

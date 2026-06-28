@@ -30,11 +30,11 @@ import { UtprasTable, type SortKey, type SortState } from "./utpras-table";
 import { PaginationBar } from "./pagination-bar";
 import { UtprasRecordDialog } from "./utpras-record-dialog";
 import { ExportMenu, type ExportMenuItem } from "./export-menu";
-import { field, validityStatus } from "@/lib/utpras";
+import { field, validityStatus, computeStats } from "@/lib/utpras";
 import { exportUtprasCsv, exportUtprasXlsx } from "@/lib/utpras-export";
 import { prettyDate } from "@/lib/export";
 import type { UtprasRecord } from "@/lib/utpras-columns";
-import type { School } from "@/lib/utpras-schools";
+import { isMultiSite, locationLabel, type School } from "@/lib/utpras-schools";
 
 interface SchoolDetailProps {
   school: School;
@@ -43,6 +43,10 @@ interface SchoolDetailProps {
 
 // Columns scanned by the in-school search box.
 const SEARCH_FIELDS = ["course_program", "program_reg_no", "sector", "trainer", "duration"];
+
+/** Strip filesystem-illegal characters so the download filename stays sane. */
+const safeFileName = (s: string) =>
+  s.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 
 function InfoItem({
   icon: Icon,
@@ -76,6 +80,11 @@ export function SchoolDetail({ school, onBack }: SchoolDetailProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   const deferredSearch = React.useDeferredValue(search);
+
+  // Compute the KPI counts on the client from the same programs the table shows,
+  // so the cards always reconcile with the rows a status filter selects (server
+  // and browser clocks can differ on a day boundary).
+  const stats = React.useMemo(() => computeStats(school.programs), [school.programs]);
 
   const filtered = React.useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
@@ -121,7 +130,7 @@ export function SchoolDetail({ school, onBack }: SchoolDetailProps) {
 
   const handleExportCsv = React.useCallback(() => {
     try {
-      exportUtprasCsv(sorted, `${school.name} — UTPRAS Programs as of ${prettyDate()}.csv`);
+      exportUtprasCsv(sorted, `${safeFileName(school.name)} — UTPRAS Programs as of ${prettyDate()}.csv`);
       toast.success(`Exported ${sorted.length.toLocaleString()} programs to CSV`);
     } catch (e) {
       console.error(e);
@@ -131,7 +140,7 @@ export function SchoolDetail({ school, onBack }: SchoolDetailProps) {
 
   const handleExportXlsx = React.useCallback(async () => {
     try {
-      await exportUtprasXlsx(sorted, `${school.name} — UTPRAS Programs as of ${prettyDate()}.xlsx`, {
+      await exportUtprasXlsx(sorted, `${safeFileName(school.name)} — UTPRAS Programs as of ${prettyDate()}.xlsx`, {
         generatedAt: new Date().toLocaleString(),
         totalRecords: sorted.length,
       });
@@ -162,7 +171,19 @@ export function SchoolDetail({ school, onBack }: SchoolDetailProps) {
     [handleExportCsv, handleExportXlsx],
   );
 
-  const location = [school.municipality, school.province].filter(Boolean).join(", ");
+  const location = locationLabel(school);
+  const multiSite = isMultiSite(school);
+
+  // Distinct "municipality, province" pairs — shown for multi-site brands so a
+  // single address never stands in for several branches.
+  const locationPairs = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const p of school.programs) {
+      const label = [field(p, "municipality"), field(p, "province")].filter(Boolean).join(", ");
+      if (label) set.add(label);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [school.programs]);
 
   return (
     <div className="space-y-6">
@@ -197,27 +218,33 @@ export function SchoolDetail({ school, onBack }: SchoolDetailProps) {
           <InfoItem icon={User} label="Head of Institution">
             {school.institution_head}
           </InfoItem>
-          <InfoItem icon={Hash} label="Unique Institution ID">
-            <span className="font-mono tnum">{school.unique_institution_id}</span>
+          <InfoItem icon={Hash} label={school.uiids.length > 1 ? "Unique Institution IDs" : "Unique Institution ID"}>
+            <span className="font-mono tnum">{school.uiids.length ? school.uiids.join(", ") : "—"}</span>
           </InfoItem>
           <InfoItem icon={Layers} label="Sectors">
             {school.sectors.length ? school.sectors.join(", ") : ""}
           </InfoItem>
-          <InfoItem icon={MapPin} label="Address">
-            {school.address}
-          </InfoItem>
+          {multiSite ? (
+            <InfoItem icon={MapPin} label="Locations">
+              <span className="whitespace-pre-line">{locationPairs.join("\n")}</span>
+            </InfoItem>
+          ) : (
+            <InfoItem icon={MapPin} label="Address">
+              {school.address}
+            </InfoItem>
+          )}
           <InfoItem icon={Phone} label="Contact Number">
-            <span className="whitespace-pre-line font-mono text-[0.82rem] tnum">{school.tel_no}</span>
+            <span className="whitespace-pre-line font-mono text-[0.82rem] tnum">{school.tel_no || "—"}</span>
           </InfoItem>
           <InfoItem icon={Mail} label="Email Address">
-            <span className="break-all">{school.email}</span>
+            <span className="break-all">{school.email || "—"}</span>
           </InfoItem>
         </div>
       </Card>
 
       {/* This school's KPI cards */}
       <UtprasStatCards
-        stats={school.stats}
+        stats={stats}
         activeStatus={status}
         onSelect={(s) => setStatus(s !== "all" && status === s ? "all" : s)}
       />
