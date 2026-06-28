@@ -1,6 +1,4 @@
-import Link from "next/link";
 import {
-  ArrowRight,
   Users,
   ShieldCheck,
   Clock,
@@ -12,8 +10,9 @@ import { computeStats } from "@/lib/nttc";
 import { getUtprasRegistry } from "@/lib/utpras-data";
 import { getAssessmentCenters } from "@/lib/ptcacs-data";
 import { getUnifiedSchools, computeUnifiedOverview } from "@/lib/schools-unified";
-import { SECTIONS, type Section } from "@/lib/sections";
+import { computeOverviewCharts } from "@/lib/overview-stats";
 import { OverviewTabs } from "@/components/dashboard/overview-tabs";
+import { OverviewCharts } from "@/components/dashboard/overview-charts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,6 +37,7 @@ export default async function OverviewPage() {
   const stats = computeStats(nttc);
   const schools = getUnifiedSchools(utpras, centers);
   const schoolsOverview = computeUnifiedOverview(schools);
+  const charts = computeOverviewCharts(nttc, centers);
 
   const tiles: Tile[] = [
     { label: "NTTC Holders", value: stats.total, icon: Users, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-100 dark:bg-sky-500/15" },
@@ -45,8 +45,6 @@ export default async function OverviewPage() {
     { label: "Expiring Soon", value: stats.expiring, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-500/15" },
     { label: "Expired", value: stats.expired, icon: CircleSlash, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-100 dark:bg-rose-500/15" },
   ];
-
-  const modules = SECTIONS.filter((s) => s.key !== "overview");
 
   const summary = (
     <>
@@ -80,18 +78,15 @@ export default async function OverviewPage() {
         </div>
       </section>
 
-      {/* Module grid */}
+      {/* Regional snapshot — cross-registry charts that no single module shows */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Modules</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {modules.map((s) => (
-            <ModuleCard
-              key={s.key}
-              section={s}
-              meta={s.key === "nttc" ? `${stats.total.toLocaleString()} certificate holders` : undefined}
-            />
-          ))}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground">Regional snapshot</h2>
+          <p className="text-xs text-muted-foreground">
+            Certification &amp; accreditation health and where capacity sits across Central Visayas.
+          </p>
         </div>
+        <OverviewCharts data={charts} />
       </section>
     </>
   );
@@ -107,32 +102,5 @@ export default async function OverviewPage() {
 
       <OverviewTabs summary={summary} schools={schools} overview={schoolsOverview} />
     </div>
-  );
-}
-
-function ModuleCard({ section, meta }: { section: Section; meta?: string }) {
-  const Icon = section.icon;
-  return (
-    <Link href={section.href} className="group">
-      <Card className="h-full gap-3 p-5 transition-all hover:-translate-y-0.5 hover:ring-foreground/20">
-        <div className="flex items-center justify-between">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-secondary text-primary ring-1 ring-border">
-            <Icon className="size-5" />
-          </div>
-          {section.available ? (
-            <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-          ) : (
-            <Badge variant="outline" className="text-[10px] text-muted-foreground">
-              Soon
-            </Badge>
-          )}
-        </div>
-        <div>
-          <h3 className="font-semibold">{section.label}</h3>
-          <p className="text-sm text-muted-foreground">{section.description}</p>
-        </div>
-        {meta && <p className="text-xs font-medium text-muted-foreground">{meta}</p>}
-      </Card>
-    </Link>
   );
 }

@@ -10,6 +10,7 @@ import {
   BookMarked,
   GraduationCap,
   ChartPie,
+  LayoutDashboard,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface UtprasHeaderProps {
 }
 
 const TABS = [
+  { label: "Summary", href: "/utpras/summary", icon: LayoutDashboard },
   { label: "Programs", href: "/utpras", icon: BookMarked },
   { label: "Schools", href: "/utpras/schools", icon: GraduationCap },
   { label: "Statistics", href: "/utpras/statistics", icon: ChartPie },

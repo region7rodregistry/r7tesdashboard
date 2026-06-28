@@ -19,6 +19,8 @@ interface Props {
   totalCategories?: number;
   icon?: React.ReactNode;
   unit?: string;
+  /** Per-label colour overrides (e.g. semantic status tones). */
+  colors?: Record<string, string>;
   className?: string;
 }
 
@@ -28,10 +30,10 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CIRC = 2 * Math.PI * RADIUS;
 const CENTER = SIZE / 2;
 
-const colorFor = (label: string, index: number): string =>
-  label.startsWith("Other") ? OTHER_COLOR : PALETTE[index % PALETTE.length];
+const colorFor = (label: string, index: number, colors?: Record<string, string>): string =>
+  colors?.[label] ?? (label.startsWith("Other") ? OTHER_COLOR : PALETTE[index % PALETTE.length]);
 
-export function PieChart({ title, data, totalCategories, icon, unit = "records", className }: Props) {
+export function PieChart({ title, data, totalCategories, icon, unit = "records", colors, className }: Props) {
   const [hovered, setHovered] = useState<number | null>(null);
   useEffect(() => setHovered(null), [data]);
 
@@ -44,9 +46,9 @@ export function PieChart({ title, data, totalCategories, icon, unit = "records",
       const dash = fraction * CIRC;
       const offset = -((acc / total) * CIRC) || 0;
       acc += s.value;
-      return { ...s, index: i, fraction, dash, offset, color: colorFor(s.label, i) };
+      return { ...s, index: i, fraction, dash, offset, color: colorFor(s.label, i, colors) };
     });
-  }, [data, total]);
+  }, [data, total, colors]);
 
   const active = hovered != null && hovered < segments.length ? segments[hovered] : null;
   const distinct = totalCategories ?? data.length;

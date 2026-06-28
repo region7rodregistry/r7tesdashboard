@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { SECTIONS } from "@/lib/sections";
+import { useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/app/login/actions";
@@ -73,10 +74,13 @@ function SidebarBody({
   pathname,
   idPrefix,
   onNavigate,
+  onHide,
 }: {
   pathname: string;
   idPrefix: string;
   onNavigate?: () => void;
+  /** Desktop only — collapses the rail. */
+  onHide?: () => void;
 }) {
   return (
     <div className="bg-tesda-header flex h-full flex-col text-white">
@@ -95,6 +99,17 @@ function SidebarBody({
           <p className="text-sm font-bold">Regional Dashboard VII</p>
           <p className="text-xs text-sky-200">TESDA Region VII</p>
         </div>
+        {onHide && (
+          <button
+            type="button"
+            onClick={onHide}
+            aria-label="Hide sidebar"
+            title="Hide sidebar"
+            className="ml-auto grid size-8 shrink-0 place-items-center rounded-md text-sky-100/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none"
+          >
+            <PanelLeftClose className="size-5" />
+          </button>
+        )}
       </div>
 
       <NavLinks pathname={pathname} idPrefix={idPrefix} onNavigate={onNavigate} />
@@ -120,6 +135,7 @@ function SidebarBody({
 export function AppSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { hidden, setHidden } = useSidebar();
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => {
@@ -128,10 +144,38 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Desktop rail — fixed; content gets lg:pl-64 in the layout. */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 lg:block">
-        <SidebarBody pathname={pathname} idPrefix="desktop" />
+      {/* Desktop rail — fixed; content gets lg:pl-64 in the layout. Slides out
+          (and back) when hidden, in step with the content's padding. */}
+      <aside
+        aria-hidden={hidden || undefined}
+        inert={hidden}
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 hidden w-64 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
+          hidden && "lg:-translate-x-full",
+        )}
+      >
+        <SidebarBody pathname={pathname} idPrefix="desktop" onHide={() => setHidden(true)} />
       </aside>
+
+      {/* Floating "show" button — appears (desktop only) when the rail is hidden. */}
+      <AnimatePresence>
+        {hidden && (
+          <motion.button
+            key="show-sidebar"
+            type="button"
+            onClick={() => setHidden(false)}
+            aria-label="Show sidebar"
+            title="Show sidebar"
+            initial={{ opacity: 0, x: -14, scale: 0.85 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -14, scale: 0.85 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed left-3 top-3 z-50 hidden size-10 place-items-center rounded-xl bg-card text-foreground shadow-lg ring-1 ring-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:grid"
+          >
+            <PanelLeftOpen className="size-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Mobile: top bar + Radix drawer (Esc-to-close, focus trap/restore, scroll lock). */}
       <Dialog.Root open={open} onOpenChange={setOpen}>

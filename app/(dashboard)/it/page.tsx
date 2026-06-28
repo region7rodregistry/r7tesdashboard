@@ -1,8 +1,7 @@
-import { ComingSoon } from "@/components/sections/coming-soon";
-import { getSection } from "@/lib/sections";
+import { IctUnit } from "@/components/sections/ict-unit";
 
-export const metadata = { title: "I.T. — Regional Dashboard VII" };
+export const metadata = { title: "ICT Unit — Regional Dashboard VII" };
 
-export default function ItPage() {
-  return <ComingSoon section={getSection("it")} />;
+export default function IctUnitPage() {
+  return <IctUnit />;
 }

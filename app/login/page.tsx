@@ -2,13 +2,14 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { MapPin, ShieldCheck } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export const metadata = {
   title: "Sign in — Regional Dashboard VII",
+  description: "Sign in to the TESDA Region VII Regional Dashboard.",
 };
 
 // Auth state is per-request — never cache this route.
@@ -45,9 +46,9 @@ export default async function LoginPage() {
               <Image
                 src="/icons/tlogo.png"
                 alt="TESDA — Technical Education and Skills Development Authority"
-                width={72}
-                height={72}
-                className="size-14 object-contain"
+                width={96}
+                height={96}
+                className="size-16 object-contain"
                 priority
               />
             </div>
@@ -63,9 +64,8 @@ export default async function LoginPage() {
           </Suspense>
         </div>
 
-        <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-sky-200/80">
-          <ShieldCheck className="size-3.5" />
-          Authorized personnel only · National TVET Trainer&rsquo;s Certificate
+        <p className="mt-5 text-center text-xs text-sky-200/80">
+          Developed by ROD ICT Unit © {new Date().getFullYear()}
         </p>
       </div>
     </main>

@@ -22,6 +22,7 @@ export function LoginForm() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
+      autoComplete="off"
       className="flex flex-col gap-4"
     >
       <input type="hidden" name="next" value={next} />
@@ -56,9 +57,8 @@ export function LoginForm() {
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
-            placeholder="••••••••"
             className="h-11 pr-10 pl-9"
             aria-invalid={Boolean(state.error)}
           />

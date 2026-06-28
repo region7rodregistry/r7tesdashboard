@@ -69,11 +69,11 @@ export const SECTIONS: Section[] = [
   },
   {
     key: "it",
-    label: "I.T.",
+    label: "ICT Unit",
     href: "/it",
     icon: Cpu,
-    description: "Systems, assets, and technical support.",
-    available: false,
+    description: "The team and systems behind Regional Dashboard VII.",
+    available: true,
   },
 ];
 
