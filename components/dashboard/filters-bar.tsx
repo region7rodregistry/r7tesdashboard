@@ -12,12 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ValidityStatus } from "@/lib/nttc";
+import { cn } from "@/lib/utils";
 
 export interface FilterState {
   search: string;
   province: string;
   sector: string;
   status: ValidityStatus | "all";
+  /** Optional — only used by sections that pass an `institutions` list. */
+  institution?: string;
 }
 
 interface FiltersBarProps {
@@ -26,8 +29,14 @@ interface FiltersBarProps {
   onReset: () => void;
   provinces: string[];
   sectors: string[];
+  /** When provided (and non-empty), renders a "Name of Institution" dropdown. */
+  institutions?: string[];
   total: number;
   filtered: number;
+  /** Search input placeholder. Defaults to the NTTC-flavored copy. */
+  searchPlaceholder?: string;
+  /** Noun for the count line, e.g. "records" (default) or "programs". */
+  noun?: string;
 }
 
 const ALL = "__all__";
@@ -38,14 +47,19 @@ export function FiltersBar({
   onReset,
   provinces,
   sectors,
+  institutions,
   total,
   filtered,
+  searchPlaceholder = "Search name, certificate, control number, qualification…",
+  noun = "records",
 }: FiltersBarProps) {
+  const hasInstitutions = Boolean(institutions && institutions.length > 0);
   const hasFilters =
     filters.search !== "" ||
     filters.province !== "all" ||
     filters.sector !== "all" ||
-    filters.status !== "all";
+    filters.status !== "all" ||
+    (filters.institution != null && filters.institution !== "all");
 
   return (
     <Card className="gap-3 p-4">
@@ -55,7 +69,7 @@ export function FiltersBar({
           <Input
             value={filters.search}
             onChange={(e) => onChange({ search: e.target.value })}
-            placeholder="Search name, certificate, control number, qualification…"
+            placeholder={searchPlaceholder}
             className="pl-9"
             aria-label="Search records"
           />
@@ -70,7 +84,12 @@ export function FiltersBar({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:w-auto">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-2 lg:flex lg:w-auto lg:flex-wrap",
+            hasInstitutions ? "sm:grid-cols-2" : "sm:grid-cols-3",
+          )}
+        >
           <Select
             value={filters.province === "all" ? ALL : filters.province}
             onValueChange={(v) => onChange({ province: v === ALL ? "all" : v })}
@@ -87,6 +106,29 @@ export function FiltersBar({
               ))}
             </SelectContent>
           </Select>
+
+          {hasInstitutions && (
+            <Select
+              value={
+                filters.institution == null || filters.institution === "all"
+                  ? ALL
+                  : filters.institution
+              }
+              onValueChange={(v) => onChange({ institution: v === ALL ? "all" : v })}
+            >
+              <SelectTrigger className="lg:w-60" aria-label="Filter by institution">
+                <SelectValue placeholder="Institution" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All Institutions</SelectItem>
+                {institutions!.map((inst) => (
+                  <SelectItem key={inst} value={inst}>
+                    {inst}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={filters.status === "all" ? ALL : filters.status}
@@ -132,7 +174,7 @@ export function FiltersBar({
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <SlidersHorizontal className="size-3.5" />
         Showing <span className="font-semibold text-foreground tnum">{filtered.toLocaleString()}</span>
-        of <span className="tnum">{total.toLocaleString()}</span> records
+        of <span className="tnum">{total.toLocaleString()}</span> {noun}
       </div>
     </Card>
   );

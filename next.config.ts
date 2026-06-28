@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   experimental: {
     staleTimes: { dynamic: 300, static: 300 },
   },
+  // Legacy routes from before the NTTC registry became a sub-section.
+  async redirects() {
+    return [{ source: "/statistics", destination: "/nttc/statistics", permanent: true }];
+  },
 };
 
 export default nextConfig;

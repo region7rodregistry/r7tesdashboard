@@ -20,9 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NTTC Registry — TESDA Region VII",
+  title: "Regional Dashboard VII — TESDA Region VII",
   description:
-    "Official registry of National TVET Trainer's Certificate (NTTC) holders for TESDA Region VII (Central Visayas).",
+    "TESDA Region VII (Central Visayas) regional dashboard — NTTC registry, PTCACs, UTPRAS, Planning, and I.T.",
   icons: { icon: "/icons/nttcmis.png" },
 };
 

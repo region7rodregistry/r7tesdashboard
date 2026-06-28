@@ -102,6 +102,16 @@ export function invalidateRegistryCache(): void {
   registryMemo = null;
 }
 
+/**
+ * Just the data-source label ("supabase" | "local"), for chrome (e.g. the NTTC
+ * header badge) that needs the source but not the ~2 MB of records. Backed by
+ * the same memoized read, so it's effectively free alongside getRegistry().
+ */
+export async function getRegistrySource(): Promise<RegistrySource["source"]> {
+  const { source } = await getRegistry();
+  return source;
+}
+
 export interface RegistryStatistics {
   source: RegistrySource["source"];
   data: StatsData;

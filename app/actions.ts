@@ -13,8 +13,9 @@ export async function syncAction(): Promise<SyncResult> {
   const result = await syncRegistryFromSheet();
   if (result.ok) {
     invalidateRegistryCache(); // drop the in-process memo (registry + statistics)
-    revalidatePath("/"); // invalidate the client Router Cache for both routes
-    revalidatePath("/statistics");
+    revalidatePath("/"); // Overview shows live NTTC headline numbers
+    revalidatePath("/nttc"); // NTTC registry
+    revalidatePath("/nttc/statistics"); // NTTC statistics
   }
   return result;
 }
