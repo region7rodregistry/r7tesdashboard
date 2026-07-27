@@ -7,7 +7,7 @@ import { RefreshCw, CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { syncAction } from "@/app/actions";
-import { AddedRecordsModal } from "./added-records-modal";
+import { SyncResultsModal } from "./added-records-modal";
 import type { AddedRecord } from "@/lib/sync";
 
 interface SyncButtonProps {
@@ -20,6 +20,7 @@ export function SyncButton({ enabled, className }: SyncButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [added, setAdded] = React.useState<AddedRecord[]>([]);
+  const [updated, setUpdated] = React.useState<AddedRecord[]>([]);
   const [modalOpen, setModalOpen] = React.useState(false);
 
   function runSync() {
@@ -33,19 +34,22 @@ export function SyncButton({ enabled, className }: SyncButtonProps) {
           return;
         }
         const n = result.added.length;
-        toast.success(
-          n > 0 ? `Added ${n} new record${n === 1 ? "" : "s"}` : "No new records to add",
-          {
-            id: toastId,
-            description:
-              n > 0
-                ? "New people from the sheet were appended to the registry."
-                : "Everyone in the sheet is already in the registry.",
-          },
-        );
+        const u = result.updated.length;
+        const parts = [
+          n > 0 && `Added ${n} new record${n === 1 ? "" : "s"}`,
+          u > 0 && `updated ${u} existing record${u === 1 ? "" : "s"}`,
+        ].filter(Boolean);
+        toast.success(parts.length > 0 ? parts.join(", ") : "Registry is up to date", {
+          id: toastId,
+          description:
+            parts.length > 0
+              ? "Changes from the sheet were applied to the registry."
+              : "Everyone in the sheet is already in the registry with the same details.",
+        });
         router.refresh();
-        if (n > 0) {
+        if (n > 0 || u > 0) {
           setAdded(result.added);
+          setUpdated(result.updated);
           setModalOpen(true);
         }
       } catch (err) {
@@ -79,7 +83,7 @@ export function SyncButton({ enabled, className }: SyncButtonProps) {
         <span className="hidden sm:inline">{pending ? "Syncing…" : "Sync"}</span>
       </Button>
 
-      <AddedRecordsModal records={added} open={modalOpen} onOpenChange={setModalOpen} />
+      <SyncResultsModal added={added} updated={updated} open={modalOpen} onOpenChange={setModalOpen} />
     </>
   );
 }

@@ -1,15 +1,46 @@
 import "server-only";
 import { getSupabaseAdminClient, canSyncToSupabase } from "./supabase";
 import { parseCsv, rowsToRecords, validateNttcHeader, googleSheetCsvUrl } from "./csv";
-import { COLUMNS, TABLE_NAME, type NttcRecord } from "./columns";
+import { COLUMNS, TABLE_NAME, LETTER_TO_KEY, type NttcRecord } from "./columns";
 import { normalizeValue } from "./normalize";
-import { field, lastFirst, formatDate, validityStatus, type ValidityStatus } from "./nttc";
+import { field, lastFirst, formatDate, parseDate, validityStatus, type ValidityStatus } from "./nttc";
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID || "15FtN632uFrs-CvaruK3XtvJvHYotfrvsahRNIxL0peY";
 const SHEET_GID = process.env.GOOGLE_SHEET_GID || "0";
 const CHUNK = 500;
+const UPDATE_CONCURRENCY = 5;
+const UPDATE_RETRIES = 2;
 
-/** A newly-inserted row, trimmed to the fields shown in the "added" modal. */
+/**
+ * Sheet-authoritative columns that are updated in place when a person already
+ * exists in Supabase: sector, certificate numbers/dates (NC, TM, NTTC), CLN,
+ * assessors, remarks, NTTC type, and employment fields. Identity columns
+ * (names, qualification) and personal contact/background fields (address,
+ * email, institution, …) are deliberately NOT in this list — the registry
+ * often holds richer values there than the sheet.
+ */
+const UPDATE_LETTERS = [
+  "Q", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA",
+  "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL",
+] as const;
+const UPDATE_KEYS = UPDATE_LETTERS.map((l) => LETTER_TO_KEY[l]);
+
+/** Date-valued columns compared semantically ("02/24/2022" == "February 24, 2022"). */
+const DATE_LETTERS = new Set(["T", "U", "W", "X", "AC", "AD"]);
+
+/** True when a sheet value is a real change (not a formatting/case-only variant). */
+function valuesDiffer(letter: string, sheetV: string, dbV: string | null): boolean {
+  if (dbV === null) return true;
+  if (DATE_LETTERS.has(letter)) {
+    const a = parseDate(sheetV);
+    const b = parseDate(dbV);
+    if (a && b) return a.getTime() !== b.getTime();
+  }
+  const norm = (s: string) => s.replace(/\s+/g, " ").trim().toUpperCase();
+  return norm(sheetV) !== norm(dbV);
+}
+
+/** A newly-inserted or updated row, trimmed to the fields shown in the sync-results modal. */
 export interface AddedRecord {
   id: number;
   name: string;
@@ -21,7 +52,7 @@ export interface AddedRecord {
 }
 
 export type SyncResult =
-  | { ok: true; count: number; added: AddedRecord[]; syncedAt: string }
+  | { ok: true; count: number; added: AddedRecord[]; updated: AddedRecord[]; syncedAt: string }
   | { ok: false; status: number; error: string; hint?: string };
 
 /** Translate a letter-keyed record into a snake_case Supabase row. */
@@ -41,13 +72,15 @@ const personKey = (last: string, first: string, qual: string) =>
   `${normKey(last)}|${normKey(first)}|${normKey(qual)}`;
 
 /**
- * Pull the Google Sheet's published CSV and APPEND new people into Supabase.
+ * Pull the Google Sheet's published CSV and sync it into Supabase.
  * Shared by the server action (in-app Sync button) and the REST route (cron/external).
  *
- * Supabase is the source of truth. We add only the sheet people who are NOT already
- * present (matched by last name + first name + qualification, accent-insensitive),
- * giving them fresh ids after the current max. We never overwrite existing rows by
- * position and never delete anything — sync only appends.
+ * Supabase is the source of truth. Sheet people NOT already present (matched by
+ * last name + first name + qualification, accent-insensitive) are APPENDED with
+ * fresh ids after the current max. People already present get their
+ * sheet-authoritative columns (UPDATE_LETTERS) UPDATED in place — empty sheet
+ * cells never clear existing values, and formatting-only differences are
+ * ignored. We never overwrite rows by position and never delete anything.
  */
 export async function syncRegistryFromSheet(): Promise<SyncResult> {
   if (!canSyncToSupabase) {
@@ -104,14 +137,17 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     return { ok: false, status: 422, error: "Found 0 named people in the sheet — nothing to sync. Check the tab (gid)." };
   }
 
-  // 3) Load the existing registry's identity keys + current max id. Supabase is
-  //    the source of truth, so we only APPEND people not already present.
-  const existingKeys = new Set<string>();
+  // 3) Load the existing registry (identity keys + the sheet-authoritative
+  //    columns) and the current max id. Supabase is the source of truth:
+  //    new people are appended, matched people are updated in place.
+  type ExistingRow = { id: number } & Record<string, string | null>;
+  const existingByKey = new Map<string, ExistingRow[]>();
+  const SELECT_COLS = ["id", "last_name", "first_name", "qualification", ...UPDATE_KEYS].join(", ");
   let maxId = 0;
   for (let from = 0; ; from += 1000) {
     const { data: dbRows, error: dbErr } = await supabase
       .from(TABLE_NAME)
-      .select("id, last_name, first_name, qualification")
+      .select(SELECT_COLS)
       .order("id")
       .range(from, from + 999);
     if (dbErr) {
@@ -123,10 +159,13 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
       };
     }
     for (const row of dbRows ?? []) {
-      const r = row as { id: number; last_name: string | null; first_name: string | null; qualification: string | null };
+      const r = row as unknown as ExistingRow;
       // Normalize qualification on BOTH sides of the key so it matches the form
       // recordToRow stores — otherwise normalized rows never match and re-append.
-      existingKeys.add(personKey(r.last_name ?? "", r.first_name ?? "", normalizeValue("R", r.qualification ?? "")));
+      const key = personKey(r.last_name ?? "", r.first_name ?? "", normalizeValue("R", r.qualification ?? ""));
+      const list = existingByKey.get(key);
+      if (list) list.push(r);
+      else existingByKey.set(key, [r]);
       if (r.id > maxId) maxId = r.id;
     }
     if (!dbRows || dbRows.length < 1000) break;
@@ -135,12 +174,51 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
   // Pick the new people (not already present, and de-duped within the sheet) and
   // give them fresh ids appended after the current max.
   const toInsert: NttcRecord[] = [];
+  const claimedKeys = new Set<string>();
   for (const r of named) {
     const key = personKey(field(r, "C"), field(r, "D"), normalizeValue("R", field(r, "R")));
-    if (existingKeys.has(key)) continue;
-    existingKeys.add(key);
+    if (existingByKey.has(key) || claimedKeys.has(key)) continue;
+    claimedKeys.add(key);
     maxId += 1;
     toInsert.push({ ...r, id: maxId });
+  }
+
+  // 3b) For people already in the registry, diff the sheet-authoritative columns
+  //     and collect real changes. Empty sheet cells never clear a stored value,
+  //     and date/case/whitespace formatting differences are not changes. When a
+  //     person matches several registry rows, each row is kept in step.
+  const updates: { id: number; changes: Record<string, string> }[] = [];
+  const updatedRecords: AddedRecord[] = [];
+  const diffedKeys = new Set<string>();
+  for (const r of named) {
+    const key = personKey(field(r, "C"), field(r, "D"), normalizeValue("R", field(r, "R")));
+    const matches = existingByKey.get(key);
+    if (!matches || diffedKeys.has(key)) continue;
+    diffedKeys.add(key);
+    for (const dbRow of matches) {
+      const changes: Record<string, string> = {};
+      for (const letter of UPDATE_LETTERS) {
+        const raw = field(r, letter);
+        if (!raw) continue;
+        const sheetV = normalizeValue(letter, raw);
+        const dbRaw = dbRow[LETTER_TO_KEY[letter]] ?? null;
+        const dbV = dbRaw === null ? null : normalizeValue(letter, dbRaw);
+        if (valuesDiffer(letter, sheetV, dbV)) changes[LETTER_TO_KEY[letter]] = sheetV;
+      }
+      if (Object.keys(changes).length === 0) continue;
+      updates.push({ id: dbRow.id, changes });
+      // The row's state after the update, for the sync-results modal.
+      const finalV = (letter: string) => changes[LETTER_TO_KEY[letter]] ?? dbRow[LETTER_TO_KEY[letter]] ?? "";
+      updatedRecords.push({
+        id: dbRow.id,
+        name: lastFirst(r),
+        sector: normalizeValue("Q", finalV("Q")),
+        qualification: normalizeValue("R", dbRow.qualification ?? ""),
+        cln: finalV("AE"),
+        validity: formatDate(finalV("AD")),
+        status: validityStatus({ id: dbRow.id, AD: finalV("AD") } as NttcRecord),
+      });
+    }
   }
 
   // Append (insert) only the new rows. No positional overwrites, no deletes.
@@ -157,6 +235,34 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     }
   }
 
+  // Apply the in-place updates in small concurrent batches, retrying each row
+  // a couple of times — long runs occasionally hit transient socket resets.
+  const applyUpdate = async (u: { id: number; changes: Record<string, string> }) => {
+    let lastMessage = "";
+    for (let attempt = 0; attempt <= UPDATE_RETRIES; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt));
+      try {
+        const { error } = await supabase.from(TABLE_NAME).update(u.changes).eq("id", u.id);
+        if (!error) return null;
+        lastMessage = error.message;
+      } catch (err) {
+        lastMessage = err instanceof Error ? err.message : String(err);
+      }
+    }
+    return `row id ${u.id}: ${lastMessage}`;
+  };
+  for (let i = 0; i < updates.length; i += UPDATE_CONCURRENCY) {
+    const batch = updates.slice(i, i + UPDATE_CONCURRENCY);
+    const failures = (await Promise.all(batch.map(applyUpdate))).filter(Boolean);
+    if (failures.length > 0) {
+      return {
+        ok: false,
+        status: 500,
+        error: `Supabase update failed (${failures[0]}). Some updates may have been applied — re-run sync (it is idempotent).`,
+      };
+    }
+  }
+
   const added: AddedRecord[] = toInsert.map((r) => ({
     id: r.id,
     name: lastFirst(r),
@@ -167,7 +273,7 @@ export async function syncRegistryFromSheet(): Promise<SyncResult> {
     status: validityStatus(r),
   }));
 
-  return { ok: true, count: named.length, added, syncedAt: new Date().toISOString() };
+  return { ok: true, count: named.length, added, updated: updatedRecords, syncedAt: new Date().toISOString() };
 }
 
 export { SHEET_ID, SHEET_GID };
