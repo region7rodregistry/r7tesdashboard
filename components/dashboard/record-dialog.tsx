@@ -224,19 +224,11 @@ function RecordBody({ record }: { record: NttcRecord }) {
               <InfoItem label="Control Number (CLN-NTC)" value={field(record, "AE")} mono />
               <InfoItem label="NTTC Date Issued" value={formatDate(field(record, "AC"))} />
               <InfoItem label="NTTC Expiration (Validity)" value={formatDate(field(record, "AD"))} />
-              <InfoItem label="New NTTC or Renewal" value={field(record, "AG")} />
-              <InfoItem label="Type of Employment" value={field(record, "AH")} />
-              <InfoItem label="Status of Employment" value={field(record, "AI")} />
-              <InfoItem
-                label="Month / Year Issued"
-                value={[field(record, "AK"), field(record, "AL")].filter(Boolean).join(" ")}
-              />
               <InfoItem
                 label="NTTC Expiration (Same as NC)"
                 value={formatDate(field(record, "U"))}
                 className="sm:col-span-2"
               />
-              <InfoItem label="Remarks" value={field(record, "AF")} className="sm:col-span-2" />
             </Section>
           </TabsContent>
         </Tabs>

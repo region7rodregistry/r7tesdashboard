@@ -153,40 +153,5 @@
     "letter": "AE",
     "key": "cln_ntc_number",
     "label": "CLN-NTC Number (Control Number)"
-  },
-  {
-    "letter": "AF",
-    "key": "remarks",
-    "label": "Remarks"
-  },
-  {
-    "letter": "AG",
-    "key": "nttc_type",
-    "label": "New NTTC or Renewal"
-  },
-  {
-    "letter": "AH",
-    "key": "employment_type",
-    "label": "Type of Employment"
-  },
-  {
-    "letter": "AI",
-    "key": "employment_status",
-    "label": "Status of Employment"
-  },
-  {
-    "letter": "AJ",
-    "key": "expiration_match_nc",
-    "label": "NTTC Expiration Same as NC"
-  },
-  {
-    "letter": "AK",
-    "key": "month_issued",
-    "label": "Month Issued"
-  },
-  {
-    "letter": "AL",
-    "key": "year_issued",
-    "label": "Year Issued"
   }
 ]

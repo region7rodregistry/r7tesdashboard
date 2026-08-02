@@ -44,7 +44,7 @@ snapshot of **290 records** and the Sync button shows as *unavailable*.
 
 | File | Purpose |
 | --- | --- |
-| [`db/schema.sql`](db/schema.sql) | `CREATE TABLE nttc_registry` — all 38 columns + comments + indexes |
+| [`db/schema.sql`](db/schema.sql) | `CREATE TABLE nttc_registry` — all 31 columns + comments + indexes |
 | [`db/seed.sql`](db/seed.sql) | Seeds all **290** records. **Idempotent** — it `TRUNCATE`s first, so it can be re-run any time without duplicate-key errors |
 
 **Load into Supabase:** open the SQL Editor, run `schema.sql`, then run `seed.sql`.

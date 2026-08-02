@@ -38,14 +38,7 @@ CREATE TABLE nttc_registry (
   nttc_certificate_number  TEXT,
   nttc_date_issued         TEXT,
   nttc_expiration_date     TEXT,
-  cln_ntc_number           TEXT,
-  remarks                  TEXT,
-  nttc_type                TEXT,
-  employment_type          TEXT,
-  employment_status        TEXT,
-  expiration_match_nc      TEXT,
-  month_issued             TEXT,
-  year_issued              TEXT
+  cln_ntc_number           TEXT
 );
 
 COMMENT ON TABLE nttc_registry IS 'National TVET Trainer''s Certificate (NTTC) holders — TESDA Region VII registry.';
@@ -80,13 +73,6 @@ COMMENT ON COLUMN nttc_registry.nttc_certificate_number IS 'NTTC Certificate Num
 COMMENT ON COLUMN nttc_registry.nttc_date_issued IS 'NTTC Date Issued (source column AC)';
 COMMENT ON COLUMN nttc_registry.nttc_expiration_date IS 'NTTC Expiration Date (Validity) (source column AD)';
 COMMENT ON COLUMN nttc_registry.cln_ntc_number IS 'CLN-NTC Number (Control Number) (source column AE)';
-COMMENT ON COLUMN nttc_registry.remarks IS 'Remarks (source column AF)';
-COMMENT ON COLUMN nttc_registry.nttc_type IS 'New NTTC or Renewal (source column AG)';
-COMMENT ON COLUMN nttc_registry.employment_type IS 'Type of Employment (source column AH)';
-COMMENT ON COLUMN nttc_registry.employment_status IS 'Status of Employment (source column AI)';
-COMMENT ON COLUMN nttc_registry.expiration_match_nc IS 'NTTC Expiration Same as NC (source column AJ)';
-COMMENT ON COLUMN nttc_registry.month_issued IS 'Month Issued (source column AK)';
-COMMENT ON COLUMN nttc_registry.year_issued IS 'Year Issued (source column AL)';
 
 CREATE INDEX idx_nttc_registry_province     ON nttc_registry (province);
 CREATE INDEX idx_nttc_registry_last_name     ON nttc_registry (last_name);

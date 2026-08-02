@@ -33,13 +33,6 @@ const VOCAB: Record<string, Record<string, string>> = {
     "SCAFFOLDING WORKS (SUPPORTED TYPE SCAFFOLD) NC II":
       "SCAFFOLDING WORKS NC II (SUPPORTED TYPE SCAFFOLD)", // token order
   },
-  // AH = Type of Employment
-  AH: {
-    "TESDA EMPLOYEE": "TESDA",
-    "PRIVATELY EMPLOYED": "Private",
-    "PRIVATE EMPLOYEE": "Private", // wording variant of private-sector
-    "GOVERNMENT EMPLOYEE (NOT TESDA)": "Other Government Agency",
-  },
 };
 
 const normKey = (s: string) => s.trim().toUpperCase().replace(/\s+/g, " ");

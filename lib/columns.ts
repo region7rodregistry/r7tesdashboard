@@ -1,6 +1,6 @@
 // Single source of truth for the NTTC registry column model.
 //
-// The source spreadsheet uses spreadsheet-letter columns (A..AL). We keep those
+// The source spreadsheet uses spreadsheet-letter columns (A..AE). We keep those
 // letters as the canonical record keys (so the bundled records.json, the Supabase
 // rows, and the Google-Sheet sync all line up), and attach a snake_case database
 // column name + a human label to each one.
@@ -46,16 +46,9 @@ export const COLUMNS: ColumnDef[] = [
   { letter: "AC", key: "nttc_date_issued", label: "NTTC Date Issued" },
   { letter: "AD", key: "nttc_expiration_date", label: "NTTC Expiration Date (Validity)" },
   { letter: "AE", key: "cln_ntc_number", label: "CLN-NTC Number (Control Number)" },
-  { letter: "AF", key: "remarks", label: "Remarks" },
-  { letter: "AG", key: "nttc_type", label: "New NTTC or Renewal" },
-  { letter: "AH", key: "employment_type", label: "Type of Employment" },
-  { letter: "AI", key: "employment_status", label: "Status of Employment" },
-  { letter: "AJ", key: "expiration_match_nc", label: "NTTC Expiration Same as NC" },
-  { letter: "AK", key: "month_issued", label: "Month Issued" },
-  { letter: "AL", key: "year_issued", label: "Year Issued" },
 ];
 
-/** A registry record: spreadsheet letters A..AL plus a stable numeric id. */
+/** A registry record: spreadsheet letters A..AE plus a stable numeric id. */
 export interface NttcRecord {
   id: number;
   [letter: string]: string | number | null | undefined;

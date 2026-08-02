@@ -23,22 +23,6 @@ function tally(records: NttcRecord[], keyFn: (r: NttcRecord) => string): Slice[]
 export const byProvince = (r: NttcRecord[]): Slice[] => tally(r, (x) => field(x, "B"));
 export const bySector = (r: NttcRecord[]): Slice[] => tally(r, (x) => field(x, "Q"));
 export const byQualification = (r: NttcRecord[]): Slice[] => tally(r, (x) => field(x, "R"));
-/** Employment-type distribution in a fixed, meaningful order (blanks -> Unspecified). */
-const EMPLOYMENT_ORDER = ["Private", "Public", "TESDA", UNSPECIFIED, "Other Government Agency"];
-export function byEmploymentType(records: NttcRecord[]): Slice[] {
-  const counts = new Map<string, number>();
-  for (const r of records) {
-    const key = field(r, "AH").trim() || UNSPECIFIED;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  // Fixed order first; append any unexpected label so nothing is lost; drop zero-counts.
-  const ordered = [...EMPLOYMENT_ORDER];
-  for (const k of counts.keys()) if (!ordered.includes(k)) ordered.push(k);
-  return ordered
-    .map((label) => ({ label, value: counts.get(label) ?? 0 }))
-    .filter((s) => s.value > 0);
-}
-export const byNttcType = (r: NttcRecord[]): Slice[] => tally(r, (x) => field(x, "AG"));
 export const byInstitutionType = (r: NttcRecord[]): Slice[] => tally(r, (x) => field(x, "N"));
 
 /** Validity status distribution, in a fixed, meaningful order. */
@@ -79,9 +63,7 @@ export interface StatBucket {
   province: Slice[];
   validity: Slice[];
   sector: Slice[]; // top-N + "Other" (for charts)
-  employment: Slice[];
   institution: Slice[];
-  nttcType: Slice[];
   qualification: Slice[]; // top-N + "Other" (for charts)
   sectorFull: Slice[]; // every sector, by count (for exports)
   qualificationFull: Slice[]; // every qualification, by count (for exports)
@@ -101,9 +83,7 @@ function statBucket(records: NttcRecord[]): StatBucket {
     province: provinceAll,
     validity: byValidity(records),
     sector: topNWithOther(sectorAll, STATS_TOP_N),
-    employment: byEmploymentType(records),
     institution: byInstitutionType(records),
-    nttcType: byNttcType(records),
     qualification: topNWithOther(qualAll, STATS_TOP_N),
     sectorFull: sectorAll,
     qualificationFull: qualAll,

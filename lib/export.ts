@@ -109,9 +109,7 @@ export function exportRegistryCsv(records: NttcRecord[], filename: string): void
 
 /**
  * Excel column layout — mirrors the official RO 2026 NTTC registry headers
- * ("follow the column formatting" of the source CSV). `valueLetter` lets a
- * column pull its value from a different field: the "Validity" column (the old
- * "Expiration Same as NC" remark, AJ) instead shows the NTTC expiration date.
+ * ("follow the column formatting" of the source CSV).
  */
 const REGISTRY_XLSX_COLUMNS: { letter: string; header: string; valueLetter?: string }[] = [
   { letter: "A", header: "Region" },
@@ -145,13 +143,6 @@ const REGISTRY_XLSX_COLUMNS: { letter: string; header: string; valueLetter?: str
   { letter: "AC", header: "NTTC — Date Issued (MM/DD/YYYY)" },
   { letter: "AD", header: "NTTC — Expiration Date (MM/DD/YYYY)" },
   { letter: "AE", header: "CLN-NTC Number" },
-  { letter: "AF", header: "Remarks" },
-  { letter: "AG", header: "New NTTC or Renewal?" },
-  { letter: "AH", header: "Type of Employment" },
-  { letter: "AI", header: "Status of Employment" },
-  { letter: "AJ", header: "Validity", valueLetter: "AD" },
-  { letter: "AK", header: "Month Issued" },
-  { letter: "AL", header: "Year Issued" },
 ];
 
 const LEFT = { horizontal: "left", vertical: "middle" } as const;

@@ -52,7 +52,7 @@ const clean = (v: string | undefined): string | null => {
   return t === "" ? null : t;
 };
 
-/** A->0, B->1 ... AL->37 */
+/** A->0, B->1 ... AE->30 */
 function letterToIndex(letter: string): number {
   let n = 0;
   for (const ch of letter) n = n * 26 + (ch.charCodeAt(0) - 64);
@@ -104,8 +104,8 @@ export function csvToRecords(csv: string): NttcRecord[] {
  */
 export function validateNttcHeader(rows: string[][]): string | null {
   if (rows.length < 4) return "Sheet has fewer than 4 rows — header/data layout is unexpected.";
-  if ((rows[0]?.length ?? 0) < 38) {
-    return `Expected at least 38 columns, found ${rows[0]?.length ?? 0}. The sheet layout has changed.`;
+  if ((rows[0]?.length ?? 0) < 31) {
+    return `Expected at least 31 columns, found ${rows[0]?.length ?? 0}. The sheet layout has changed.`;
   }
   const anchors: { row: number; col: number; expect: string }[] = [
     { row: 0, col: 1, expect: "PROVINCE" },

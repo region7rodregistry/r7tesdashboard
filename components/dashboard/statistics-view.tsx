@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import {
-  Users, MapPin, Layers, GraduationCap, ShieldCheck, Briefcase, RefreshCw, Building2,
+  Users, MapPin, Layers, GraduationCap, ShieldCheck, Building2,
   FileText, FileSpreadsheet, FileType,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -63,9 +63,7 @@ export function StatisticsView({ data }: { data: StatsData }) {
     { title: "By Province", slices: b.province },
     { title: "By Validity Status", slices: b.validity },
     { title: "By Sector", slices: b.sectorFull },
-    { title: "By Employment Type", slices: b.employment },
     { title: "By Institution Type", slices: b.institution },
-    { title: "New vs. Renewal", slices: b.nttcType },
     { title: "By Qualification", slices: b.qualificationFull },
   ];
 
@@ -183,9 +181,7 @@ export function StatisticsView({ data }: { data: StatsData }) {
           <PieChart title="By Province" data={b.province} icon={<MapPin className="size-4 text-amber-600 dark:text-amber-400" />} />
           <PieChart title="By Validity Status" data={b.validity} icon={<ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />} />
           <PieChart title="By Sector" data={b.sector} totalCategories={b.sectorCount} icon={<Layers className="size-4 text-violet-600 dark:text-violet-400" />} />
-          <PieChart title="By Employment Type" data={b.employment} icon={<Briefcase className="size-4 text-sky-600 dark:text-sky-400" />} />
           <PieChart title="By Institution Type" data={b.institution} icon={<Building2 className="size-4 text-cyan-600 dark:text-cyan-400" />} />
-          <PieChart title="New vs. Renewal" data={b.nttcType} icon={<RefreshCw className="size-4 text-rose-600 dark:text-rose-400" />} />
           <PieChart
             title="By Qualification"
             data={b.qualification}

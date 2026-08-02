@@ -5,8 +5,8 @@ import { COLUMNS, TABLE_NAME, LETTER_TO_KEY, type NttcRecord } from "./columns";
 import { normalizeValue } from "./normalize";
 import { field, lastFirst, formatDate, parseDate, validityStatus, type ValidityStatus } from "./nttc";
 
-const SHEET_ID = process.env.GOOGLE_SHEET_ID || "15FtN632uFrs-CvaruK3XtvJvHYotfrvsahRNIxL0peY";
-const SHEET_GID = process.env.GOOGLE_SHEET_GID || "0";
+const SHEET_ID = process.env.GOOGLE_SHEET_ID || "1TnNdv5nC_4PHjnws9aL6CpBd6Nvz--E3P3dZxRR37A4";
+const SHEET_GID = process.env.GOOGLE_SHEET_GID || "1031452427";
 const CHUNK = 500;
 const UPDATE_CONCURRENCY = 5;
 const UPDATE_RETRIES = 2;
@@ -14,14 +14,12 @@ const UPDATE_RETRIES = 2;
 /**
  * Sheet-authoritative columns that are updated in place when a person already
  * exists in Supabase: sector, certificate numbers/dates (NC, TM, NTTC), CLN,
- * assessors, remarks, NTTC type, and employment fields. Identity columns
- * (names, qualification) and personal contact/background fields (address,
- * email, institution, …) are deliberately NOT in this list — the registry
- * often holds richer values there than the sheet.
+ * and assessors. Identity columns (names, qualification) and personal
+ * contact/background fields (address, email, institution, …) are deliberately
+ * NOT in this list — the registry often holds richer values there than the sheet.
  */
 const UPDATE_LETTERS = [
-  "Q", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA",
-  "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL",
+  "Q", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA", "AB", "AC", "AD", "AE",
 ] as const;
 const UPDATE_KEYS = UPDATE_LETTERS.map((l) => LETTER_TO_KEY[l]);
 
